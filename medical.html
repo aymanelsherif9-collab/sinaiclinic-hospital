@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sinaiclinic Hospital - منظومة الإدارة والتقارير الطبية</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    
+    @media print {
+      header, #nav-tabs, button, select, input, .no-print { display: none !important; }
+      body { background-color: #ffffff !important; color: #000000 !important; font-size: 8.5pt; padding: 0; margin: 0; }
+      .standalone-report:not(.hidden) { display: block !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+      .standalone-report.hidden { display: none !important; }
+      table { width: 100% !important; border-collapse: collapse !important; margin-bottom: 6px !important; }
+      th, td { border: 1px solid #475569 !important; padding: 3px 5px !important; color: #000 !important; font-size: 7.5pt !important; }
+      th { background-color: #f1f5f9 !important; font-weight: bold !important; }
+      .chart-container-print { max-height: 120px !important; height: 120px !important; }
+      @page { size: A4 portrait; margin: 8mm 10mm; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+  <!-- شاشة الدخول -->
+  <div id="login-section" class="flex items-center justify-center min-h-screen px-4">
+    <div class="bg-white p-8 rounded-2xl shadow-lg border border-slate-200 max-w-md w-full">
+      <div class="text-center mb-6">
+        <div class="inline-flex p-3 bg-blue-50 text-blue-600 rounded-xl mb-3">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+        </div>
+        <h1 class="text-xl font-bold text-slate-900">مستشفى سيناء كلينك</h1>
+        <p class="text-xs text-slate-500 font-semibold" dir="ltr">Sinaiclinic Hospital Dashboard</p>
+      </div>
+
+      <div id="login-error" class="hidden mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200"></div>
+
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-slate-700">البريد الإلكتروني</label>
+          <input type="email" id="email" required placeholder="director@hospital.com" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none text-left" dir="ltr">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-slate-700">كلمة المرور</label>
+          <input type="password" id="password" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none text-left" dir="ltr">
+        </div>
+        <button type="submit" id="login-btn" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition">تسجيل الدخول</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- المنظومة الرئيسية -->
+  <div id="app-section" class="hidden min-h-screen flex flex-col">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="p-2 bg-blue-50 text-blue-600 rounded-lg font-bold text-lg">🏥</span>
+        <div>
+          <h2 class="font-bold text-slate-900 leading-tight" id="user-display-name">المستخدم</h2>
+          <span class="text-xs text-blue-600 font-medium" id="user-display-role">الدور الوظيفي</span>
+        </div>
+      </div>
+
+      <nav class="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl text-xs sm:text-sm font-semibold" id="nav-tabs">
+        <button onclick="switchTab('nursing')" id="tab-nursing" class="px-3 py-1.5 rounded-lg bg-white shadow-sm text-blue-600">التمريض والأسرة</button>
+        <button onclick="switchTab('er')" id="tab-er" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">🚨 سجل الطوارئ (ER)</button>
+        <button onclick="switchTab('clinics')" id="tab-clinics" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">🩺 العيادات بالفئات</button>
+        <button onclick="switchTab('visiting')" id="tab-visiting" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">الأطباء الخارجيون</button>
+        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">📑 التقارير والمخططات (A4)</button>
+        <button onclick="switchTab('settings')" id="tab-settings" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 bg-amber-50 text-amber-700">⚙️ إدارة الهيكل</button>
+      </nav>
+
+      <button onclick="handleLogout()" class="text-xs sm:text-sm text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg transition font-medium">تسجيل الخروج</button>
+    </header>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto p-6 space-y-6">
+
+      <!-- 1. تبويب التمريض والأسرة -->
+      <div id="panel-nursing" class="tab-panel bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">سجل الوردية وإشغال الأسرة (Nursing Census)</h3>
+            <p class="text-sm text-slate-500">حصر الأسرة (الداخلي 12 - العناية 4) بتصنيف الفئات الثلاث</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">التاريخ</label>
+              <input type="date" id="census-date" class="px-3 py-1.5 border rounded-lg text-sm bg-slate-50">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">الوردية</label>
+              <select id="census-shift" class="px-3 py-1.5 border rounded-lg text-sm bg-slate-50">
+                <option value="morning">صباحية (Morning)</option>
+                <option value="evening">مسائية (Evening)</option>
+                <option value="night">ليلية (Night)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <form id="census-form" class="space-y-6">
+          <div>
+            <h4 class="font-semibold text-sm text-slate-700 mb-3">حصر الأسرة ونزلاء القسم حسب الفئة (مقيم / روسي / أوروبي)</h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-right border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-100 font-bold text-slate-700">
+                    <th class="p-2.5 rounded-r">القسم</th>
+                    <th class="p-2.5 text-center">إجمالي المشغول</th>
+                    <th class="p-2.5 text-center bg-blue-50 text-blue-900">مقيم</th>
+                    <th class="p-2.5 text-center bg-emerald-50 text-emerald-900">روسي</th>
+                    <th class="p-2.5 text-center bg-amber-50 text-amber-900">أوروبي</th>
+                    <th class="p-2.5 text-center">دخول جديد</th>
+                    <th class="p-2.5 text-center">خروج</th>
+                    <th class="p-2.5 text-center">تحويل لـ ICU</th>
+                    <th class="p-2.5 rounded-l text-center">تحويل للعمليات</th>
+                  </tr>
+                </thead>
+                <tbody id="census-table-body" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-sm text-slate-700 mb-3">حضور وتغطية هيئة التمريض</h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-right border-collapse text-sm">
+                <thead>
+                  <tr class="bg-slate-100 text-xs font-semibold text-slate-600">
+                    <th class="p-3 rounded-r-lg">القسم</th>
+                    <th class="p-3">المجدول</th>
+                    <th class="p-3">الحاضر الفعلي</th>
+                    <th class="p-3">الغياب</th>
+                    <th class="p-3 rounded-l-lg">ملاحظات</th>
+                  </tr>
+                </thead>
+                <tbody id="nursing-table-body" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="pt-4 flex items-center justify-between border-t border-slate-100">
+            <span id="census-status" class="text-sm font-medium"></span>
+            <button type="submit" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition">
+              حفظ بيانات الوردية والأسرة ✓
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 2. تبويب سجل الطوارئ (ER) -->
+      <div id="panel-er" class="tab-panel hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <span class="p-1.5 bg-red-50 text-red-600 rounded-lg">🚨</span>
+              سجل نشاط الطوارئ والاستقبال وتصنيف المرضى (ER Daily Log)
+            </h3>
+            <p class="text-sm text-slate-500">تسجيل الحالات وتوزيعها بين (مقيم - روسي - أوروبي) ومسارات التحويل</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">التاريخ</label>
+              <input type="date" id="er-date" class="px-3 py-1.5 border rounded-lg text-sm bg-slate-50">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">الوردية</label>
+              <select id="er-shift" class="px-3 py-1.5 border rounded-lg text-sm bg-slate-50">
+                <option value="morning">صباحية (Morning)</option>
+                <option value="evening">مسائية (Evening)</option>
+                <option value="night">ليلية (Night)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <form id="er-form" class="space-y-6">
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+            <h4 class="font-bold text-slate-900 text-sm">أولاً: تصنيف حالات الطوارئ المستقبلة بالوردية حسب الفئة</h4>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl text-center">
+                <label class="block text-xs font-bold text-blue-900 mb-1">حالات المقيمين (Resident)</label>
+                <input type="number" id="er-residents" min="0" value="0" oninput="calculateErTotal()" class="w-full px-2 py-1.5 border rounded-lg text-center font-black text-lg text-blue-700 bg-white">
+                <span class="text-[10px] text-blue-600">مصريين / تعاقدات فنادق</span>
+              </div>
+
+              <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-center">
+                <label class="block text-xs font-bold text-emerald-900 mb-1">حالات الروس (Russian)</label>
+                <input type="number" id="er-russians" min="0" value="0" oninput="calculateErTotal()" class="w-full px-2 py-1.5 border rounded-lg text-center font-black text-lg text-emerald-700 bg-white">
+                <span class="text-[10px] text-emerald-600">سياحة روسيا ودول CIS</span>
+              </div>
+
+              <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-center">
+                <label class="block text-xs font-bold text-amber-900 mb-1">حالات الأوروبيين (European)</label>
+                <input type="number" id="er-europeans" min="0" value="0" oninput="calculateErTotal()" class="w-full px-2 py-1.5 border rounded-lg text-center font-black text-lg text-amber-700 bg-white">
+                <span class="text-[10px] text-amber-600">تأمين دولي / سياحة غربية</span>
+              </div>
+
+              <div class="bg-red-50 border-2 border-red-300 p-3 rounded-xl text-center flex flex-col justify-center">
+                <span class="text-xs font-bold text-red-900">إجمالي الحالات (تلقائي)</span>
+                <div class="text-2xl font-black text-red-600 mt-1" id="er-total-display">0</div>
+                <input type="hidden" id="er-total-cases" value="0">
+                <span class="text-[10px] text-red-700">مجموع الوردية الكلي</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-sm text-slate-800 mb-3">ثانياً: مسارات وتصريف حالات الطوارئ (Disposition Pathways)</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">خروج وملاحظة سريعة</label>
+                <input type="number" id="er-discharged" min="0" value="0" class="w-full px-2 py-1.5 border rounded-lg text-center font-bold text-slate-800 bg-white">
+                <span class="text-[10px] text-slate-400">Discharged</span>
+              </div>
+              <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-center">
+                <label class="block text-xs font-semibold text-blue-900 mb-1">تنويم قسم داخلي</label>
+                <input type="number" id="er-admitted" min="0" value="0" class="w-full px-2 py-1.5 border rounded-lg text-center font-bold text-blue-700 bg-white">
+                <span class="text-[10px] text-blue-500">Inpatient Bed</span>
+              </div>
+              <div class="bg-rose-50 p-3 rounded-xl border border-rose-100 text-center">
+                <label class="block text-xs font-semibold text-rose-900 mb-1">نقل عاجل لـ ICU</label>
+                <input type="number" id="er-icu" min="0" value="0" class="w-full px-2 py-1.5 border rounded-lg text-center font-bold text-rose-700 bg-white">
+                <span class="text-[10px] text-rose-500">ICU Bed</span>
+              </div>
+              <div class="bg-purple-50 p-3 rounded-xl border border-purple-100 text-center">
+                <label class="block text-xs font-semibold text-purple-900 mb-1">دخول مباشر عمليات</label>
+                <input type="number" id="er-or" min="0" value="0" class="w-full px-2 py-1.5 border rounded-lg text-center font-bold text-purple-700 bg-white">
+                <span class="text-[10px] text-purple-500">Direct to OR</span>
+              </div>
+              <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 text-center">
+                <label class="block text-xs font-semibold text-amber-900 mb-1">تحويل خارجي</label>
+                <input type="number" id="er-out" min="0" value="0" class="w-full px-2 py-1.5 border rounded-lg text-center font-bold text-amber-700 bg-white">
+                <span class="text-[10px] text-amber-600">Transfer Out</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-sm text-slate-800 mb-3">ثالثاً: الفحوصات التشخيصية العاجلة المستهلكة من الطوارئ</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                <div>
+                  <span class="font-semibold text-xs text-slate-800 block">طلبات التحاليل المعملية العاجلة (Stat Lab)</span>
+                  <span class="text-[10px] text-slate-500">إجمالي الفحوصات المطلوبة</span>
+                </div>
+                <input type="number" id="er-lab" min="0" value="0" class="w-24 px-2 py-1.5 border rounded-lg text-center font-bold text-blue-700 bg-white">
+              </div>
+              <div class="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                <div>
+                  <span class="font-semibold text-xs text-slate-800 block">طلبات الأشعة العاجلة (X-Ray / CT)</span>
+                  <span class="text-[10px] text-slate-500">إجمالي الأشعات المطلوبة</span>
+                </div>
+                <input type="number" id="er-rad" min="0" value="0" class="w-24 px-2 py-1.5 border rounded-lg text-center font-bold text-indigo-700 bg-white">
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 flex items-center justify-between border-t border-slate-100">
+            <span id="er-status" class="text-sm font-medium"></span>
+            <button type="submit" id="save-er-btn" class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-sm transition">
+              حفظ حركة الطوارئ وتوزيع الفئات ✓
+            </button>
+          </div>
+        </form>
+
+        <div class="pt-4 border-t border-slate-100">
+          <h4 class="font-semibold text-sm text-slate-700 mb-3">آخر حركات الطوارئ وتوزيع الفئات المسجلة</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 font-bold text-slate-700">
+                  <th class="p-2.5 rounded-r">التاريخ</th>
+                  <th class="p-2.5">الوردية</th>
+                  <th class="p-2.5 text-center">الإجمالي</th>
+                  <th class="p-2.5 text-center text-blue-700">مقيم</th>
+                  <th class="p-2.5 text-center text-emerald-700">روسي</th>
+                  <th class="p-2.5 text-center text-amber-700">أوروبي</th>
+                  <th class="p-2.5 text-center">تنويم داخلي</th>
+                  <th class="p-2.5 text-center">ICU</th>
+                  <th class="p-2.5 text-center">معمل</th>
+                  <th class="p-2.5 rounded-l text-center">أشعة</th>
+                </tr>
+              </thead>
+              <tbody id="er-recent-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. تبويب العيادات والتحويلات -->
+      <div id="panel-clinics" class="tab-panel hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">كشوفات العيادات الخارجية وتصنيف فئات المرضى</h3>
+            <p class="text-sm text-slate-500">تسجيل كشوفات الأطباء مقسمة حسب (مقيم - روسي - أوروبي) ومسارات التحويل</p>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">التاريخ</label>
+            <input type="date" id="clinic-date" class="px-3 py-1.5 border rounded-lg text-sm bg-slate-50">
+          </div>
+        </div>
+
+        <form id="clinic-form" class="space-y-6">
+          <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 font-bold text-slate-700">
+                  <th class="p-2.5 rounded-r">الطبيب والعيادة</th>
+                  <th class="p-2.5 text-center bg-blue-50 text-blue-900">مقيم</th>
+                  <th class="p-2.5 text-center bg-emerald-50 text-emerald-900">روسي</th>
+                  <th class="p-2.5 text-center bg-amber-50 text-amber-900">أوروبي</th>
+                  <th class="p-2.5 text-center font-black">إجمالي الكشوفات</th>
+                  <th class="p-2.5 text-center">تحويل معمل</th>
+                  <th class="p-2.5 text-center">تحويل أشعة</th>
+                  <th class="p-2.5 text-center text-emerald-700 font-bold">تحويل عمليات</th>
+                  <th class="p-2.5 text-center">تنويم</th>
+                  <th class="p-2.5 rounded-l text-center">تحويل تخصص</th>
+                </tr>
+              </thead>
+              <tbody id="clinic-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+
+          <div class="pt-4 flex items-center justify-between border-t border-slate-100">
+            <span id="clinic-status" class="text-sm font-medium"></span>
+            <button type="submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition">
+              حفظ كشوفات العيادات والفئات ✓
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 4. تبويب الأطباء الخارجيين -->
+      <div id="panel-visiting" class="tab-panel hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+          <h3 class="text-lg font-bold text-slate-900">سجل حالات الأطباء والاستشاريين الخارجيين</h3>
+          <p class="text-sm text-slate-500">حالات العمليات والإقامة للاستشاريين من خارج كادر العيادات</p>
+        </div>
+
+        <form id="visiting-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">اسم الاستشاري الخارجي</label>
+            <select id="visiting-doctor-select" required class="w-full px-3 py-2 border rounded-lg text-sm bg-white"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">اسم الإجراء الجراحي</label>
+            <input type="text" id="visiting-op-name" required placeholder="مثال: مناظير مفاصل / تثبيت كسور" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">ساعات استخدام غرفة العمليات (OR)</label>
+            <input type="number" step="0.5" id="visiting-or-hours" value="2" class="w-full px-3 py-2 border rounded-lg text-sm bg-white text-center">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">ليالي إقامة القسم الداخلي</label>
+            <input type="number" id="visiting-inpatient-days" value="1" class="w-full px-3 py-2 border rounded-lg text-sm bg-white text-center">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">ليالي إقامة العناية المركزة (ICU)</label>
+            <input type="number" id="visiting-icu-days" value="0" class="w-full px-3 py-2 border rounded-lg text-sm bg-white text-center">
+          </div>
+          <div class="flex items-end">
+            <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition text-sm">
+              إضافة حالة الطبيب الخارجي +
+            </button>
+          </div>
+        </form>
+
+        <div>
+          <h4 class="font-semibold text-sm text-slate-700 mb-3">حالات الاستشاريين الخارجيين المسجلة مؤخراً</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-100 text-xs font-semibold text-slate-600">
+                  <th class="p-3 rounded-r-lg">الاستشاري</th>
+                  <th class="p-3">الإجراء الجراحي</th>
+                  <th class="p-3">ساعات العمليات</th>
+                  <th class="p-3">إقامة الداخلي</th>
+                  <th class="p-3 rounded-l-lg">إقامة ICU</th>
+                </tr>
+              </thead>
+              <tbody id="visiting-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. تبويب التقارير المستقلة والمخططات (A4) -->
+      <div id="panel-dashboard" class="tab-panel hidden space-y-6">
+
+        <div class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">مركز استخراج التقارير الرسمية والمخططات (A4)</h3>
+              <p class="text-xs text-slate-500">اختر الفترة الزمنية أولاً، ثم حدد التقرير المطلوب لعرضه وطباعته بمخططاته</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="setFilterPreset('today')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-xs rounded-lg font-medium">اليوم</button>
+              <button onclick="setFilterPreset('week')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-xs rounded-lg font-medium">آخر 7 أيام</button>
+              <button onclick="setFilterPreset('month')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-xs rounded-lg font-medium">الشهر الحالي</button>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-end gap-3 pt-3 border-t border-slate-100">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">من تاريخ</label>
+              <input type="date" id="rep-from-date" class="px-3 py-1.5 border rounded-lg text-sm bg-slate-50">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">إلى تاريخ</label>
+              <input type="date" id="rep-to-date" class="px-3 py-1.5 border rounded-lg text-sm bg-slate-50">
+            </div>
+            <button onclick="loadAllReportsData()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition">
+              تحليل واستخراج البيانات 🔍
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+            <button onclick="showReportType('er')" id="btn-rep-er" class="p-3 text-right rounded-xl border-2 border-red-500 bg-red-50 text-red-900 transition flex flex-col justify-between h-24">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-xs font-bold">تقرير الطوارئ ومخططاته</span>
+                <span class="text-base">🚨</span>
+              </div>
+              <span class="text-[10px] text-red-700 font-semibold">تحليل تدفق ER والرسوم البيانية</span>
+            </button>
+
+            <button onclick="showReportType('clinics')" id="btn-rep-clinics" class="p-3 text-right rounded-xl border border-slate-200 hover:border-blue-400 bg-white text-slate-700 transition flex flex-col justify-between h-24">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-xs font-bold">تحويلات العيادات بالفئات</span>
+                <span class="text-base">🩺</span>
+              </div>
+              <span class="text-[10px] text-slate-500 font-semibold">مقيم - روسي - أوروبي ونسب التحويل</span>
+            </button>
+
+            <button onclick="showReportType('census')" id="btn-rep-census" class="p-3 text-right rounded-xl border border-slate-200 hover:border-emerald-400 bg-white text-slate-700 transition flex flex-col justify-between h-24">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-xs font-bold">الأسرة والتمريض</span>
+                <span class="text-base">🛏️</span>
+              </div>
+              <span class="text-[10px] text-slate-500 font-semibold">الإشغال (12 داخلي - 4 عناية)</span>
+            </button>
+
+            <button onclick="showReportType('visiting')" id="btn-rep-visiting" class="p-3 text-right rounded-xl border border-slate-200 hover:border-indigo-400 bg-white text-slate-700 transition flex flex-col justify-between h-24">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-xs font-bold">الأطباء الخارجيون</span>
+                <span class="text-base">👨‍⚕️</span>
+              </div>
+              <span class="text-[10px] text-slate-500 font-semibold">ساعات العمليات والإقامة</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= تقرير 1: تقرير الطوارئ والمخططات البيانية (A4) ================= -->
+        <div id="standalone-er-report" class="standalone-report bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 space-y-3">
+          <div class="border-b-2 border-slate-900 pb-2">
+            <div class="flex items-center justify-between">
+              <div class="text-right">
+                <h1 class="text-base font-black text-slate-900 leading-tight">مستشفى سيناء كلينك</h1>
+                <p class="text-[10px] text-slate-700">شرم الشيخ - محافظة جنوب سيناء</p>
+                <p class="text-[9px] text-slate-600 font-bold">قطاع الشؤون الطبية والتشغيلية</p>
+              </div>
+              <div class="text-center flex flex-col items-center">
+                <div class="w-10 h-10 border-2 border-blue-700 rounded-lg flex items-center justify-center bg-blue-50 text-blue-700 font-black text-lg">
+                  +S
+                </div>
+                <span class="text-[8px] tracking-wider text-slate-600 font-bold mt-0.5">SINAICLINIC</span>
+              </div>
+              <div class="text-left" dir="ltr">
+                <h2 class="text-xs font-extrabold text-slate-900 leading-tight">SINAICLINIC HOSPITAL</h2>
+                <p class="text-[10px] text-slate-700">Emergency Department & Demographics</p>
+                <p class="text-[10px] text-slate-500">Period: <span id="er-rep-period-text"></span></p>
+              </div>
+            </div>
+            <div class="text-center mt-1 pt-1 border-t border-slate-300">
+              <h3 class="text-xs font-bold text-slate-900">التقرير التحليلي لأداء الطوارئ وتوزيع الفئات ومسارات التصريف</h3>
+            </div>
+          </div>
+
+          <div class="no-print flex justify-end">
+            <button onclick="window.print()" class="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg text-xs transition flex items-center gap-2">
+              <span>طباعة تقرير الطوارئ (A4)</span> 🖨️
+            </button>
+          </div>
+
+          <!-- بطاقات المؤشرات الأساسية -->
+          <div class="grid grid-cols-4 gap-2">
+            <div class="bg-red-50 border border-red-200 p-2 rounded-lg text-center">
+              <span class="text-[9px] text-red-800 font-bold block">إجمالي حالات الطوارئ</span>
+              <div class="text-xl font-black text-red-600 mt-0.5" id="er-rep-total">0</div>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 p-2 rounded-lg text-center">
+              <span class="text-[9px] text-blue-800 font-bold block">تنويم داخلي</span>
+              <div class="text-xl font-black text-blue-700 mt-0.5" id="er-rep-adm-rate">0%</div>
+              <span class="text-[8px] text-blue-600" id="er-rep-adm-count">0 حالة</span>
+            </div>
+            <div class="bg-rose-50 border border-rose-200 p-2 rounded-lg text-center">
+              <span class="text-[9px] text-rose-800 font-bold block">دخول لـ ICU</span>
+              <div class="text-xl font-black text-rose-700 mt-0.5" id="er-rep-icu-rate">0%</div>
+              <span class="text-[8px] text-rose-600" id="er-rep-icu-count">0 حالة</span>
+            </div>
+            <div class="bg-purple-50 border border-purple-200 p-2 rounded-lg text-center">
+              <span class="text-[9px] text-purple-800 font-bold block">عمليات طارئة</span>
+              <div class="text-xl font-black text-purple-700 mt-0.5" id="er-rep-or-count">0</div>
+              <span class="text-[8px] text-purple-600">Direct to OR</span>
+            </div>
+          </div>
+
+          <!-- جدول 1: تحليل الفئات الثلاث -->
+          <div>
+            <h4 class="font-bold text-[10px] text-slate-800 mb-1">أولاً: تحليل توزيع فئات وجنسيات المرضى المستقبلين بالطوارئ</h4>
+            <table class="w-full text-right border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 font-bold text-slate-700">
+                  <th class="p-1.5">فئة المريض</th>
+                  <th class="p-1.5 text-center">عدد الحالات</th>
+                  <th class="p-1.5 text-center">النسبة المئوية %</th>
+                  <th class="p-1.5 text-right">طبيعة التغطية والأثر التشغيلي</th>
+                </tr>
+              </thead>
+              <tbody id="er-rep-categories-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+
+          <!-- جدول 2: تحليل الورديات (أوقات الذروة) -->
+          <div>
+            <h4 class="font-bold text-[10px] text-slate-800 mb-1">ثانياً: تحليل تدفق الحالات حسب الورديات (أوقات الذروة)</h4>
+            <table class="w-full text-right border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 font-bold text-slate-700">
+                  <th class="p-1.5">الوردية</th>
+                  <th class="p-1.5 text-center">إجمالي الحالات</th>
+                  <th class="p-1.5 text-center">نسبة التدفق %</th>
+                  <th class="p-1.5 text-center">تنويم داخلي</th>
+                  <th class="p-1.5 text-center">نقل لـ ICU</th>
+                  <th class="p-1.5 text-center">معمل</th>
+                  <th class="p-1.5 text-center">أشعة</th>
+                </tr>
+              </thead>
+              <tbody id="er-rep-shifts-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+
+          <!-- جدول 3: مسارات وتصريف الحالات -->
+          <div>
+            <h4 class="font-bold text-[10px] text-slate-800 mb-1">ثالثاً: تفصيل مسارات وتصريف الحالات والاستهلاك التشخيصي للفترة</h4>
+            <table class="w-full text-right border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 font-bold text-slate-700">
+                  <th class="p-1.5">المسار / الإجراء</th>
+                  <th class="p-1.5 text-center">العدد الإجمالي</th>
+                  <th class="p-1.5 text-center">النسبة من إجمالي الطوارئ %</th>
+                  <th class="p-1.5 text-right">الأثر التشغيلي على المستشفى</th>
+                </tr>
+              </thead>
+              <tbody id="er-rep-outcomes-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+
+          <!-- الرسوم البيانية في نهاية الورقة (مضغوطة لورقة A4 واحدة) -->
+          <div class="grid grid-cols-2 gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200 chart-container-print">
+            <div class="flex flex-col items-center justify-center">
+              <span class="text-[9px] font-bold text-slate-700 mb-1">توزيع الفئات (مقيم / روسي / أوروبي)</span>
+              <div class="w-32 h-20">
+                <canvas id="chart-er-demographics"></canvas>
+              </div>
+            </div>
+            <div class="flex flex-col items-center justify-center">
+              <span class="text-[9px] font-bold text-slate-700 mb-1">مسارات تصريف الحالات</span>
+              <div class="w-full h-20">
+                <canvas id="chart-er-outcomes"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- التوقيعات والاعتماد في نهاية الصفحة -->
+          <div class="pt-2 border-t border-slate-300">
+            <div class="grid grid-cols-2 gap-8 text-center text-xs">
+              <div>
+                <p class="font-bold text-slate-800 text-[10px]">مشرف تمريض قسم الطوارئ</p>
+                <div class="mt-4 border-b border-dashed border-slate-400 w-36 mx-auto"></div>
+              </div>
+              <div>
+                <p class="font-bold text-slate-900 text-[10px]">يعتمد،، المدير الطبي للمستشفى</p>
+                <div class="mt-4 border-b border-dashed border-slate-400 w-36 mx-auto"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= تقرير 2: تقرير تحويلات العيادات بالفئات (A4) ================= -->
+        <div id="standalone-clinics-report" class="standalone-report hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+          <div class="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
+            <div>
+              <h1 class="text-base font-black text-slate-900">مستشفى سيناء كلينك</h1>
+              <h3 class="text-xs font-bold text-slate-900 mt-0.5">تقرير إنتاجية ومسارات تحويل أطباء العيادات وتوزيع الفئات</h3>
+            </div>
+            <div class="text-left" dir="ltr">
+              <h2 class="text-xs font-extrabold text-slate-900">SINAICLINIC HOSPITAL</h2>
+              <p class="text-[10px] text-slate-500">Outpatient Clinics & Demographics</p>
+            </div>
+          </div>
+          <div class="no-print flex justify-end">
+            <button onclick="window.print()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs transition">طباعة تقرير العيادات (A4) 🖨️</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 font-bold text-slate-700">
+                  <th class="p-2">الطبيب</th>
+                  <th class="p-2">التخصص</th>
+                  <th class="p-2 text-center bg-blue-50 text-blue-900">مقيم</th>
+                  <th class="p-2 text-center bg-emerald-50 text-emerald-900">روسي</th>
+                  <th class="p-2 text-center bg-amber-50 text-amber-900">أوروبي</th>
+                  <th class="p-2 text-center font-bold">إجمالي الكشوفات</th>
+                  <th class="p-2 text-center">معمل</th>
+                  <th class="p-2 text-center">أشعة</th>
+                  <th class="p-2 text-center text-emerald-700 font-bold">عمليات</th>
+                  <th class="p-2 text-center">تنويم</th>
+                  <th class="p-2 text-center bg-blue-50 text-blue-900 font-black">نسبة التحويل الجراحي %</th>
+                </tr>
+              </thead>
+              <tbody id="rep-doctor-referrals-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ================= تقرير 3: تقرير الأسرة والتمريض (A4) ================= -->
+        <div id="standalone-census-report" class="standalone-report hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+          <div class="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
+            <div>
+              <h1 class="text-base font-black text-slate-900">مستشفى سيناء كلينك</h1>
+              <h3 class="text-xs font-bold text-slate-900 mt-0.5">تقرير حركة وإشغال الأسرة وتغطية التمريض</h3>
+            </div>
+            <div class="text-left" dir="ltr">
+              <h2 class="text-xs font-extrabold text-slate-900">SINAICLINIC HOSPITAL</h2>
+              <p class="text-[10px] text-slate-500">Inpatient & Bed Census (12 Inpatient - 4 ICU)</p>
+            </div>
+          </div>
+          <div class="no-print flex justify-end">
+            <button onclick="window.print()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition">طباعة تقرير الأسرة (A4) 🖨️</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 font-bold text-slate-700">
+                  <th class="p-2">القسم</th>
+                  <th class="p-2 text-center">السعة</th>
+                  <th class="p-2 text-center bg-blue-50 text-blue-900">مقيم</th>
+                  <th class="p-2 text-center bg-emerald-50 text-emerald-900">روسي</th>
+                  <th class="p-2 text-center bg-amber-50 text-amber-900">أوروبي</th>
+                  <th class="p-2 text-center">دخول جديد</th>
+                  <th class="p-2 text-center">خروج</th>
+                  <th class="p-2 text-center bg-emerald-50 text-emerald-900">متوسط الإشغال %</th>
+                  <th class="p-2 text-center">تغطية التمريض %</th>
+                </tr>
+              </thead>
+              <tbody id="rep-census-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ================= تقرير 4: تقرير الأطباء الخارجيين (A4) ================= -->
+        <div id="standalone-visiting-report" class="standalone-report hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+          <div class="border-b-2 border-slate-900 pb-3 flex items-center justify-between">
+            <div>
+              <h1 class="text-base font-black text-slate-900">مستشفى سيناء كلينك</h1>
+              <h3 class="text-xs font-bold text-slate-900 mt-0.5">تقرير نشاط الاستشاريين الخارجيين واستغلال العمليات</h3>
+            </div>
+            <div class="text-left" dir="ltr">
+              <h2 class="text-xs font-extrabold text-slate-900">SINAICLINIC HOSPITAL</h2>
+              <p class="text-[10px] text-slate-500">Visiting Consultants & OR Utilization</p>
+            </div>
+          </div>
+          <div class="no-print flex justify-end">
+            <button onclick="window.print()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-xs transition">طباعة تقرير الخارجيين (A4) 🖨️</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 font-bold text-slate-700">
+                  <th class="p-2">الاستشاري</th>
+                  <th class="p-2">التخصص</th>
+                  <th class="p-2 text-center">العمليات</th>
+                  <th class="p-2 text-center bg-indigo-50 text-indigo-900">ساعات الـ OR</th>
+                  <th class="p-2 text-center">إقامة الداخلي</th>
+                  <th class="p-2 text-center">إقامة ICU</th>
+                </tr>
+              </thead>
+              <tbody id="rep-visiting-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 6. تبويب إدارة الهيكل -->
+      <div id="panel-settings" class="tab-panel hidden space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+          <div class="border-b border-slate-100 pb-3">
+            <h3 class="text-base font-bold text-slate-900">إضافة طبيب جديد إلى المنظومة</h3>
+            <p class="text-xs text-slate-500">تسجيل أطباء العيادات أو أطباء زائرين للعمليات</p>
+          </div>
+
+          <form id="add-doctor-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">اسم الطبيب</label>
+              <input type="text" id="new-doc-name" required placeholder="مثال: د. إيهاب سلامة" class="w-full px-3 py-2 border rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">التخصص</label>
+              <input type="text" id="new-doc-spec" required placeholder="مثال: عظام / جراحة / باطنة" class="w-full px-3 py-2 border rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">نوع التعاقد / العمل</label>
+              <select id="new-doc-type" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                <option value="in_house">طبيب عيادات داخلي (In-house)</option>
+                <option value="visiting">استشاري خارجي / عمليات فقط (Visiting)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">القسم المرتبط به</label>
+              <select id="new-doc-dept" class="w-full px-3 py-2 border rounded-lg text-sm bg-white"></select>
+            </div>
+            <div class="sm:col-span-2 lg:col-span-4 flex justify-end">
+              <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition">
+                حفظ وإضافة الطبيب +
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-base font-bold text-slate-900">الأطباء المسجلون بالمنظومة</h3>
+            <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium" id="doc-count">0 أطباء</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-100 text-xs font-semibold text-slate-600">
+                  <th class="p-3 rounded-r-lg">الاسم</th>
+                  <th class="p-3">التخصص</th>
+                  <th class="p-3">نوع العمل</th>
+                  <th class="p-3">الحالة</th>
+                  <th class="p-3 rounded-l-lg text-center">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="doctors-manage-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+          <div class="border-b border-slate-100 pb-3">
+            <h3 class="text-base font-bold text-slate-900">سعة أسرة الأقسام (مستشفى سيناء كلينك)</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-100 text-xs font-semibold text-slate-600">
+                  <th class="p-3 rounded-r-lg">اسم القسم</th>
+                  <th class="p-3">نوع القسم</th>
+                  <th class="p-3">السعة الإجمالية للأسرة</th>
+                  <th class="p-3 rounded-l-lg text-center">حفظ التعديل</th>
+                </tr>
+              </thead>
+              <tbody id="depts-manage-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://urquujkncftrnzrpgzrz.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVycXV1amtuY2Z0cm56cnBnenJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNTc1MTksImV4cCI6MjEwNTczMzUxOX0.EPe_uqUHz8ZaV9bCzCspxUaBqjX_PbiPg_-tssoNjYY";
+    const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+    let departments = [];
+    let doctors = [];
+    let chartDemo = null;
+    let chartOutcomes = null;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('census-date').value = todayStr;
+    document.getElementById('er-date').value = todayStr;
+    document.getElementById('clinic-date').value = todayStr;
+    document.getElementById('rep-from-date').value = todayStr;
+    document.getElementById('rep-to-date').value = todayStr;
+
+    // تسجيل الدخول
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('login-btn');
+      const errBox = document.getElementById('login-error');
+
+      btn.disabled = true;
+      btn.textContent = 'جاري التحقق...';
+      errBox.classList.add('hidden');
+
+      const { data, error } = await dbClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        errBox.textContent = 'بيانات الدخول غير صحيحة: ' + error.message;
+        errBox.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'تسجيل الدخول';
+        return;
+      }
+      await checkUserProfile(data.user);
+    });
+
+    async function checkUserProfile(user) {
+      const { data: profile } = await dbClient.from('profiles').select('*').eq('id', user.id).single();
+      currentUser = { ...user, profile };
+      document.getElementById('login-section').classList.add('hidden');
+      document.getElementById('app-section').classList.remove('hidden');
+      document.getElementById('user-display-name').textContent = profile?.full_name || user.email;
+      document.getElementById('user-display-role').textContent = formatRole(profile?.role);
+      await loadInitialData();
+    }
+
+    function formatRole(role) {
+      const map = {
+        medical_director: 'المدير الطبي للمستشفى',
+        nursing_director: 'رئيسة هيئة التمريض',
+        executive_board: 'مجلس الإدارة / العضو المنتدب',
+        quality_auditor: 'مسؤول الجودة والتدقيق'
+      };
+      return map[role] || role;
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById('panel-' + tabId).classList.remove('hidden');
+
+      document.querySelectorAll('#nav-tabs button').forEach(b => {
+        b.classList.remove('bg-white', 'shadow-sm', 'text-blue-600');
+        b.classList.add('text-slate-600');
+      });
+      const activeBtn = document.getElementById('tab-' + tabId);
+      activeBtn.classList.add('bg-white', 'shadow-sm', 'text-blue-600');
+      activeBtn.classList.remove('text-slate-600');
+
+      if (tabId === 'er') loadRecentErLogs();
+      if (tabId === 'dashboard') loadAllReportsData();
+      if (tabId === 'visiting') loadVisitingCases();
+    }
+
+    function showReportType(type) {
+      document.querySelectorAll('.standalone-report').forEach(r => r.classList.add('hidden'));
+      document.getElementById(`standalone-${type}-report`).classList.remove('hidden');
+
+      const btnMap = { er: 'btn-rep-er', clinics: 'btn-rep-clinics', census: 'btn-rep-census', visiting: 'btn-rep-visiting' };
+      Object.values(btnMap).forEach(id => {
+        const btn = document.getElementById(id);
+        btn.classList.remove('border-2', 'border-red-500', 'border-blue-500', 'border-emerald-500', 'border-indigo-500', 'bg-red-50', 'bg-blue-50', 'bg-emerald-50', 'bg-indigo-50');
+        btn.classList.add('border-slate-200', 'bg-white');
+      });
+
+      const active = document.getElementById(btnMap[type]);
+      active.classList.remove('border-slate-200', 'bg-white');
+      if (type === 'er') active.classList.add('border-2', 'border-red-500', 'bg-red-50');
+      if (type === 'clinics') active.classList.add('border-2', 'border-blue-500', 'bg-blue-50');
+      if (type === 'census') active.classList.add('border-2', 'border-emerald-500', 'bg-emerald-50');
+      if (type === 'visiting') active.classList.add('border-2', 'border-indigo-500', 'bg-indigo-50');
+    }
+
+    async function loadInitialData() {
+      const { data: depts } = await dbClient.from('departments').select('*').order('name');
+      departments = depts || [];
+
+      const { data: docs } = await dbClient.from('doctors').select('*').order('full_name');
+      doctors = docs || [];
+
+      renderCensusTables();
+      renderClinicTable();
+      renderVisitingDoctorsList();
+      renderManageDoctorsTable();
+      renderManageDeptsTable();
+      loadRecentErLogs();
+
+      const deptSelect = document.getElementById('new-doc-dept');
+      deptSelect.innerHTML = departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+    }
+
+    function calculateErTotal() {
+      const res = parseInt(document.getElementById('er-residents').value) || 0;
+      const rus = parseInt(document.getElementById('er-russians').value) || 0;
+      const eur = parseInt(document.getElementById('er-europeans').value) || 0;
+      const total = res + rus + eur;
+      document.getElementById('er-total-cases').value = total;
+      document.getElementById('er-total-display').textContent = total;
+    }
+
+    function calculateClinicDocTotal(row) {
+      const res = parseInt(row.querySelector('.input-res').value) || 0;
+      const rus = parseInt(row.querySelector('.input-rus').value) || 0;
+      const eur = parseInt(row.querySelector('.input-eur').value) || 0;
+      const total = res + rus + eur;
+      row.querySelector('.input-consults').value = total;
+    }
+
+    function renderCensusTables() {
+      const inpatientDepts = departments.filter(d => ['inpatient', 'icu', 'er'].includes(d.type));
+      document.getElementById('census-table-body').innerHTML = inpatientDepts.map(d => `
+        <tr data-dept-id="${d.id}">
+          <td class="p-2.5 font-bold text-slate-800">${d.name} <span class="text-[10px] text-slate-400">(${d.total_beds} سرير)</span></td>
+          <td class="p-2"><input type="number" min="0" value="0" class="input-occupied w-16 px-2 py-1 border rounded text-center font-bold"></td>
+          <td class="p-2 bg-blue-50/50"><input type="number" min="0" value="0" class="input-occ-res w-14 px-1.5 py-1 border border-blue-200 rounded text-center text-blue-700 font-semibold"></td>
+          <td class="p-2 bg-emerald-50/50"><input type="number" min="0" value="0" class="input-occ-rus w-14 px-1.5 py-1 border border-emerald-200 rounded text-center text-emerald-700 font-semibold"></td>
+          <td class="p-2 bg-amber-50/50"><input type="number" min="0" value="0" class="input-occ-eur w-14 px-1.5 py-1 border border-amber-200 rounded text-center text-amber-700 font-semibold"></td>
+          <td class="p-2"><input type="number" min="0" value="0" class="input-admissions w-14 px-1.5 py-1 border rounded text-center"></td>
+          <td class="p-2"><input type="number" min="0" value="0" class="input-discharges w-14 px-1.5 py-1 border rounded text-center"></td>
+          <td class="p-2"><input type="number" min="0" value="0" class="input-icu w-14 px-1.5 py-1 border rounded text-center"></td>
+          <td class="p-2"><input type="number" min="0" value="0" class="input-or w-14 px-1.5 py-1 border rounded text-center"></td>
+        </tr>
+      `).join('');
+
+      const nursingDepts = departments.filter(d => ['inpatient', 'icu', 'er', 'or'].includes(d.type));
+      document.getElementById('nursing-table-body').innerHTML = nursingDepts.map(d => `
+        <tr data-dept-id="${d.id}">
+          <td class="p-3 font-medium text-slate-800">${d.name}</td>
+          <td class="p-2"><input type="number" min="0" value="4" class="input-scheduled w-20 px-2 py-1 border rounded text-center"></td>
+          <td class="p-2"><input type="number" min="0" value="4" class="input-present w-20 px-2 py-1 border rounded text-center"></td>
+          <td class="p-2"><input type="number" min="0" value="0" class="input-absent w-20 px-2 py-1 border rounded text-center"></td>
+          <td class="p-2"><input type="text" placeholder="ملاحظات" class="input-notes w-full px-2 py-1 border rounded text-xs"></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderClinicTable() {
+      const activeClinicDocs = doctors.filter(d => d.is_active && d.contract_type !== 'visiting');
+      document.getElementById('clinic-table-body').innerHTML = activeClinicDocs.map(d => `
+        <tr data-doc-id="${d.id}">
+          <td class="p-2 font-bold text-slate-800">${d.full_name} <br><span class="text-[10px] text-blue-600">${d.specialty}</span></td>
+          <td class="p-1.5 bg-blue-50/50"><input type="number" min="0" value="0" oninput="calculateClinicDocTotal(this.closest('tr'))" class="input-res w-12 px-1 py-1 border border-blue-200 rounded text-center font-bold text-blue-700"></td>
+          <td class="p-1.5 bg-emerald-50/50"><input type="number" min="0" value="0" oninput="calculateClinicDocTotal(this.closest('tr'))" class="input-rus w-12 px-1 py-1 border border-emerald-200 rounded text-center font-bold text-emerald-700"></td>
+          <td class="p-1.5 bg-amber-50/50"><input type="number" min="0" value="0" oninput="calculateClinicDocTotal(this.closest('tr'))" class="input-eur w-12 px-1 py-1 border border-amber-200 rounded text-center font-bold text-amber-700"></td>
+          <td class="p-1.5"><input type="number" min="0" value="0" readonly class="input-consults w-14 px-1 py-1 border bg-slate-100 rounded text-center font-black"></td>
+          <td class="p-1.5"><input type="number" min="0" value="0" class="input-lab w-12 px-1 py-1 border rounded text-center"></td>
+          <td class="p-1.5"><input type="number" min="0" value="0" class="input-rad w-12 px-1 py-1 border rounded text-center"></td>
+          <td class="p-1.5"><input type="number" min="0" value="0" class="input-surg w-12 px-1 py-1 border rounded text-center font-bold text-emerald-700"></td>
+          <td class="p-1.5"><input type="number" min="0" value="0" class="input-adm w-12 px-1 py-1 border rounded text-center"></td>
+          <td class="p-1.5"><input type="number" min="0" value="0" class="input-cross w-12 px-1 py-1 border rounded text-center"></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderVisitingDoctorsList() {
+      const activeVisiting = doctors.filter(d => d.is_active && d.contract_type === 'visiting');
+      const select = document.getElementById('visiting-doctor-select');
+      select.innerHTML = activeVisiting.map(d => `<option value="${d.id}">${d.full_name} (${d.specialty})</option>`).join('');
+    }
+
+    function renderManageDoctorsTable() {
+      document.getElementById('doc-count').textContent = doctors.length + ' أطباء مسجلين';
+      const tbody = document.getElementById('doctors-manage-body');
+      tbody.innerHTML = doctors.map(d => `
+        <tr>
+          <td class="p-3 font-semibold text-slate-800">${d.full_name}</td>
+          <td class="p-3 text-slate-600">${d.specialty}</td>
+          <td class="p-3">
+            <span class="text-xs px-2.5 py-1 rounded-full ${d.contract_type === 'visiting' ? 'bg-indigo-50 text-indigo-700' : 'bg-blue-50 text-blue-700'}">
+              ${d.contract_type === 'visiting' ? 'استشاري خارجي (عمليات)' : 'عيادات داخلي'}
+            </span>
+          </td>
+          <td class="p-3">
+            <span class="text-xs font-semibold ${d.is_active ? 'text-emerald-600' : 'text-red-500'}">
+              ${d.is_active ? '● نشط بالعمل' : '○ موقوف مؤقتاً'}
+            </span>
+          </td>
+          <td class="p-3 text-center space-x-2 space-x-reverse">
+            <button onclick="toggleDoctorStatus('${d.id}', ${d.is_active})" class="text-xs px-2.5 py-1 rounded border ${d.is_active ? 'border-amber-400 text-amber-700 hover:bg-amber-50' : 'border-emerald-400 text-emerald-700 hover:bg-emerald-50'}">
+              ${d.is_active ? 'إيقاف مؤقت' : 'إعادة تفعيل'}
+            </button>
+            <button onclick="deleteDoctor('${d.id}')" class="text-xs px-2.5 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50">
+              حذف
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderManageDeptsTable() {
+      const tbody = document.getElementById('depts-manage-body');
+      tbody.innerHTML = departments.map(d => `
+        <tr data-dept-id="${d.id}">
+          <td class="p-3 font-semibold text-slate-800">${d.name}</td>
+          <td class="p-3 text-slate-500 text-xs">${d.type}</td>
+          <td class="p-3">
+            <input type="number" min="0" value="${d.total_beds || 0}" class="input-total-beds w-24 px-2 py-1 border rounded text-center">
+          </td>
+          <td class="p-3 text-center">
+            <button onclick="updateDeptBeds('${d.id}', this)" class="text-xs px-3 py-1 bg-slate-800 text-white rounded hover:bg-black transition">
+              حفظ السعة ✓
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // حفظ سجل الطوارئ
+    document.getElementById('er-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const status = document.getElementById('er-status');
+      const btn = document.getElementById('save-er-btn');
+      const logDate = document.getElementById('er-date').value;
+      const logShift = document.getElementById('er-shift').value;
+
+      calculateErTotal();
+      btn.disabled = true;
+      status.textContent = 'جاري الحفظ في السحابة...';
+      status.className = 'text-sm text-blue-600 font-medium';
+
+      const payload = {
+        log_date: logDate,
+        shift: logShift,
+        residents_count: parseInt(document.getElementById('er-residents').value) || 0,
+        russians_count: parseInt(document.getElementById('er-russians').value) || 0,
+        europeans_count: parseInt(document.getElementById('er-europeans').value) || 0,
+        total_er_cases: parseInt(document.getElementById('er-total-cases').value) || 0,
+        discharged_home: parseInt(document.getElementById('er-discharged').value) || 0,
+        admitted_inpatient: parseInt(document.getElementById('er-admitted').value) || 0,
+        transferred_icu: parseInt(document.getElementById('er-icu').value) || 0,
+        transferred_or: parseInt(document.getElementById('er-or').value) || 0,
+        transferred_out: parseInt(document.getElementById('er-out').value) || 0,
+        lab_orders: parseInt(document.getElementById('er-lab').value) || 0,
+        radiology_orders: parseInt(document.getElementById('er-rad').value) || 0,
+        recorded_by: currentUser.id
+      };
+
+      const { error } = await dbClient.from('daily_er_logs').upsert([payload], { onConflict: 'log_date,shift' });
+      if (error) {
+        status.textContent = 'خطأ أثناء الحفظ: ' + error.message;
+        status.className = 'text-sm text-red-600 font-semibold';
+      } else {
+        status.textContent = 'تم حفظ بيانات وردية الطوارئ والفئات بنجاح ✓';
+        status.className = 'text-sm text-emerald-600 font-semibold';
+        loadRecentErLogs();
+      }
+      btn.disabled = false;
+    });
+
+    async function loadRecentErLogs() {
+      const { data } = await dbClient
+        .from('daily_er_logs')
+        .select('*')
+        .order('log_date', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const tbody = document.getElementById('er-recent-table-body');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-slate-400">لا توجد سجلات طوارئ مسجلة حتى الآن</td></tr>`;
+      } else {
+        const shiftMap = { morning: 'صباحية', evening: 'مسائية', night: 'ليلية' };
+        tbody.innerHTML = data.map(r => `
+          <tr>
+            <td class="p-2 font-bold">${r.log_date}</td>
+            <td class="p-2">${shiftMap[r.shift] || r.shift}</td>
+            <td class="p-2 text-center font-black text-red-600">${r.total_er_cases}</td>
+            <td class="p-2 text-center font-bold text-blue-700">${r.residents_count || 0}</td>
+            <td class="p-2 text-center font-bold text-emerald-700">${r.russians_count || 0}</td>
+            <td class="p-2 text-center font-bold text-amber-700">${r.europeans_count || 0}</td>
+            <td class="p-2 text-center font-bold text-blue-800">${r.admitted_inpatient}</td>
+            <td class="p-2 text-center font-bold text-rose-700">${r.transferred_icu}</td>
+            <td class="p-2 text-center">${r.lab_orders}</td>
+            <td class="p-2 text-center">${r.radiology_orders}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function setFilterPreset(type) {
+      const now = new Date();
+      const toStr = now.toISOString().split('T')[0];
+      let fromStr = toStr;
+
+      if (type === 'week') {
+        const past = new Date();
+        past.setDate(now.getDate() - 7);
+        fromStr = past.toISOString().split('T')[0];
+      } else if (type === 'month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        fromStr = startOfMonth.toISOString().split('T')[0];
+      }
+
+      document.getElementById('rep-from-date').value = fromStr;
+      document.getElementById('rep-to-date').value = toStr;
+      loadAllReportsData();
+    }
+
+    // استخراج التقارير والمخططات
+    async function loadAllReportsData() {
+      const fromDate = document.getElementById('rep-from-date').value;
+      const toDate = document.getElementById('rep-to-date').value;
+      document.getElementById('er-rep-period-text').textContent = `From ${fromDate} To ${toDate}`;
+
+      // 1. تقرير الطوارئ
+      const { data: erData } = await dbClient
+        .from('daily_er_logs')
+        .select('*')
+        .gte('log_date', fromDate)
+        .lte('log_date', toDate);
+
+      let totalCases = 0, totalDischarged = 0, totalAdm = 0, totalIcu = 0, totalOr = 0, totalOut = 0;
+      let totalLab = 0, totalRad = 0;
+      let sumResidents = 0, sumRussians = 0, sumEuropeans = 0;
+
+      const shiftsAgg = {
+        morning: { name: 'صباحية (Morning)', cases: 0, adm: 0, icu: 0, lab: 0, rad: 0 },
+        evening: { name: 'مسائية (Evening)', cases: 0, adm: 0, icu: 0, lab: 0, rad: 0 },
+        night:   { name: 'ليلية (Night)', cases: 0, adm: 0, icu: 0, lab: 0, rad: 0 }
+      };
+
+      (erData || []).forEach(r => {
+        totalCases += r.total_er_cases || 0;
+        sumResidents += r.residents_count || 0;
+        sumRussians += r.russians_count || 0;
+        sumEuropeans += r.europeans_count || 0;
+
+        totalDischarged += r.discharged_home || 0;
+        totalAdm += r.admitted_inpatient || 0;
+        totalIcu += r.transferred_icu || 0;
+        totalOr += r.transferred_or || 0;
+        totalOut += r.transferred_out || 0;
+        totalLab += r.lab_orders || 0;
+        totalRad += r.radiology_orders || 0;
+
+        if (shiftsAgg[r.shift]) {
+          shiftsAgg[r.shift].cases += r.total_er_cases || 0;
+          shiftsAgg[r.shift].adm += r.admitted_inpatient || 0;
+          shiftsAgg[r.shift].icu += r.transferred_icu || 0;
+          shiftsAgg[r.shift].lab += r.lab_orders || 0;
+          shiftsAgg[r.shift].rad += r.radiology_orders || 0;
+        }
+      });
+
+      document.getElementById('er-rep-total').textContent = totalCases;
+      const admPct = totalCases > 0 ? ((totalAdm / totalCases) * 100).toFixed(1) : 0;
+      const icuPct = totalCases > 0 ? ((totalIcu / totalCases) * 100).toFixed(1) : 0;
+
+      document.getElementById('er-rep-adm-rate').textContent = admPct + '%';
+      document.getElementById('er-rep-adm-count').textContent = totalAdm + ' حالة تنويم';
+      document.getElementById('er-rep-icu-rate').textContent = icuPct + '%';
+      document.getElementById('er-rep-icu-count').textContent = totalIcu + ' حالة عناية';
+      document.getElementById('er-rep-or-count').textContent = totalOr + ' حالات';
+
+      // جدول 1: الفئات
+      const calcCatPct = (cnt) => totalCases > 0 ? ((cnt / totalCases) * 100).toFixed(1) : 0;
+      document.getElementById('er-rep-categories-body').innerHTML = `
+        <tr class="bg-blue-50/40">
+          <td class="p-1.5 font-bold text-blue-950">المقيمون (Residents)</td>
+          <td class="p-1.5 text-center font-black text-blue-800">${sumResidents}</td>
+          <td class="p-1.5 text-center font-black text-blue-800">${calcCatPct(sumResidents)}%</td>
+          <td class="p-1.5 text-slate-600">كشوفات نقدية محلية، رعاية صحية وتعاقدات فنادق</td>
+        </tr>
+        <tr class="bg-emerald-50/40">
+          <td class="p-1.5 font-bold text-emerald-950">السياحة الروسية ودول CIS (Russian Market)</td>
+          <td class="p-1.5 text-center font-black text-emerald-800">${sumRussians}</td>
+          <td class="p-1.5 text-center font-black text-emerald-800">${calcCatPct(sumRussians)}%</td>
+          <td class="p-1.5 text-slate-600">شركات مساعدة وتأمين سياحي روسي ومباشر بالعملة الصعبة</td>
+        </tr>
+        <tr class="bg-amber-50/40">
+          <td class="p-1.5 font-bold text-amber-950">السياحة الأوروبية والغربية (European Market)</td>
+          <td class="p-1.5 text-center font-black text-amber-800">${sumEuropeans}</td>
+          <td class="p-1.5 text-center font-black text-amber-800">${calcCatPct(sumEuropeans)}%</td>
+          <td class="p-1.5 text-slate-600">تأمين دولي معتمد ومسارات تحويل جراحية متقدمة</td>
+        </tr>
+      `;
+
+      // جدول 2: الورديات
+      const shiftsBody = document.getElementById('er-rep-shifts-body');
+      shiftsBody.innerHTML = Object.values(shiftsAgg).map(s => {
+        const shiftPct = totalCases > 0 ? ((s.cases / totalCases) * 100).toFixed(1) : 0;
+        return `
+          <tr>
+            <td class="p-1.5 font-bold">${s.name}</td>
+            <td class="p-1.5 text-center font-black">${s.cases}</td>
+            <td class="p-1.5 text-center font-semibold text-blue-700">${shiftPct}%</td>
+            <td class="p-1.5 text-center text-blue-800 font-bold">${s.adm}</td>
+            <td class="p-1.5 text-center text-rose-700 font-bold">${s.icu}</td>
+            <td class="p-1.5 text-center">${s.lab}</td>
+            <td class="p-1.5 text-center">${s.rad}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // جدول 3: المسارات
+      const calcPct = (cnt) => totalCases > 0 ? ((cnt / totalCases) * 100).toFixed(1) : 0;
+      const labRate = totalCases > 0 ? ((totalLab / totalCases) * 100).toFixed(0) : 0;
+      const radRate = totalCases > 0 ? ((totalRad / totalCases) * 100).toFixed(0) : 0;
+
+      document.getElementById('er-rep-outcomes-body').innerHTML = `
+        <tr>
+          <td class="p-1.5 font-semibold">خروج بعد الملاحظة السريعة (Discharged)</td>
+          <td class="p-1.5 text-center font-bold">${totalDischarged}</td>
+          <td class="p-1.5 text-center font-bold">${calcPct(totalDischarged)}%</td>
+          <td class="p-1.5 text-slate-500">حالات طوارئ بسيطة استقرت وخرجت بنفس اليوم</td>
+        </tr>
+        <tr class="bg-blue-50/50">
+          <td class="p-1.5 font-semibold text-blue-900">تنويم بالقسم الداخلي (Inpatient Admissions)</td>
+          <td class="p-1.5 text-center font-bold text-blue-700">${totalAdm}</td>
+          <td class="p-1.5 text-center font-black text-blue-700">${calcPct(totalAdm)}%</td>
+          <td class="p-1.5 text-blue-800">مغذي رئيسي لإشغال أسرة القسم الداخلي (سعة 12 سريراً)</td>
+        </tr>
+        <tr class="bg-rose-50/50">
+          <td class="p-1.5 font-semibold text-rose-900">تحويل عاجل للعناية المركزة (ICU Admissions)</td>
+          <td class="p-1.5 text-center font-bold text-rose-700">${totalIcu}</td>
+          <td class="p-1.5 text-center font-black text-rose-700">${calcPct(totalIcu)}%</td>
+          <td class="p-1.5 text-rose-800">حالات حرجة تغذي أسرّة الرعاية المركزة (سعة 4 أسرّة)</td>
+        </tr>
+        <tr>
+          <td class="p-1.5 font-semibold text-purple-900">نقل مباشر لغرف العمليات طوارئ (Direct to OR)</td>
+          <td class="p-1.5 text-center font-bold text-purple-700">${totalOr}</td>
+          <td class="p-1.5 text-center font-bold text-purple-700">${calcPct(totalOr)}%</td>
+          <td class="p-1.5 text-purple-800">تدخلات جراحية عاجلة فور وصول المريض</td>
+        </tr>
+        <tr>
+          <td class="p-1.5 font-semibold text-amber-900">تحويل خارجي لمستشفى آخر (Transfer Out)</td>
+          <td class="p-1.5 text-center font-bold">${totalOut}</td>
+          <td class="p-1.5 text-center font-bold">${calcPct(totalOut)}%</td>
+          <td class="p-1.5 text-slate-500">تخصصات دقيقة أو طلب السفارة/الشركة الضامنة</td>
+        </tr>
+        <tr class="border-t-2 border-slate-300">
+          <td class="p-1.5 font-bold text-slate-900">فحوصات المعمل العاجلة (Stat Lab Orders)</td>
+          <td class="p-1.5 text-center font-bold text-slate-800">${totalLab}</td>
+          <td class="p-1.5 text-center font-bold text-slate-800">${labRate}%</td>
+          <td class="p-1.5 text-slate-600">معدل طلب التحاليل لكل 100 مريض طوارئ</td>
+        </tr>
+        <tr>
+          <td class="p-1.5 font-bold text-slate-900">فحوصات الأشعة العاجلة (Stat Radiology Orders)</td>
+          <td class="p-1.5 text-center font-bold text-slate-800">${totalRad}</td>
+          <td class="p-1.5 text-center font-bold text-slate-800">${radRate}%</td>
+          <td class="p-1.5 text-slate-600">معدل طلب الأشعة لكل 100 مريض طوارئ</td>
+        </tr>
+      `;
+
+      // تحديث الرسم البياني
+      renderErCharts(sumResidents, sumRussians, sumEuropeans, totalDischarged, totalAdm, totalIcu, totalOr);
+
+      // 2. تقرير العيادات بالفئات
+      const { data: clinicLogs } = await dbClient
+        .from('daily_clinic_logs')
+        .select('*, doctors(full_name, specialty)')
+        .gte('log_date', fromDate)
+        .lte('log_date', toDate);
+
+      const docAgg = {};
+      (clinicLogs || []).forEach(log => {
+        const docId = log.doctor_id;
+        if (!docAgg[docId]) {
+          docAgg[docId] = {
+            name: log.doctors?.full_name || 'طبيب',
+            spec: log.doctors?.specialty || '-',
+            res: 0, rus: 0, eur: 0,
+            consults: 0, lab: 0, rad: 0, surg: 0, adm: 0
+          };
+        }
+        docAgg[docId].res += log.residents_count || 0;
+        docAgg[docId].rus += log.russians_count || 0;
+        docAgg[docId].eur += log.europeans_count || 0;
+        docAgg[docId].consults += log.total_consultations || 0;
+        docAgg[docId].lab += log.lab_referrals || 0;
+        docAgg[docId].rad += log.radiology_referrals || 0;
+        docAgg[docId].surg += log.surgical_referrals || 0;
+        docAgg[docId].adm += log.admission_referrals || 0;
+      });
+
+      const docRows = Object.values(docAgg);
+      document.getElementById('rep-doctor-referrals-body').innerHTML = docRows.length === 0
+        ? `<tr><td colspan="11" class="text-center py-4 text-slate-400">لا توجد كشوفات مسجلة</td></tr>`
+        : docRows.map(d => {
+            const conv = d.consults > 0 ? ((d.surg / d.consults) * 100).toFixed(1) : 0;
+            return `
+              <tr>
+                <td class="p-2 font-semibold text-slate-800">${d.name}</td>
+                <td class="p-2 text-slate-600">${d.spec}</td>
+                <td class="p-2 text-center text-blue-700 font-bold bg-blue-50/40">${d.res}</td>
+                <td class="p-2 text-center text-emerald-700 font-bold bg-emerald-50/40">${d.rus}</td>
+                <td class="p-2 text-center text-amber-700 font-bold bg-amber-50/40">${d.eur}</td>
+                <td class="p-2 text-center font-black">${d.consults}</td>
+                <td class="p-2 text-center">${d.lab}</td>
+                <td class="p-2 text-center">${d.rad}</td>
+                <td class="p-2 text-center font-bold text-emerald-700">${d.surg}</td>
+                <td class="p-2 text-center">${d.adm}</td>
+                <td class="p-2 text-center font-black bg-blue-50 text-blue-700">${conv}%</td>
+              </tr>
+            `;
+          }).join('');
+
+      // 3. تقرير حركة الأسرة
+      const { data: censusLogs } = await dbClient
+        .from('daily_bed_census')
+        .select('*, departments(name, total_beds)')
+        .gte('log_date', fromDate)
+        .lte('log_date', toDate);
+
+      const { data: nursingLogs } = await dbClient
+        .from('daily_nursing_shifts')
+        .select('*')
+        .gte('log_date', fromDate)
+        .lte('log_date', toDate);
+
+      const deptAgg = {};
+      (censusLogs || []).forEach(c => {
+        const dId = c.department_id;
+        if (!deptAgg[dId]) {
+          deptAgg[dId] = {
+            name: c.departments?.name || 'قسم',
+            totalBeds: c.departments?.total_beds || 0,
+            admissions: 0, discharges: 0, occupiedSum: 0, count: 0,
+            occRes: 0, occRus: 0, occEur: 0,
+            scheduledStaff: 0, presentStaff: 0
+          };
+        }
+        deptAgg[dId].admissions += c.new_admissions || 0;
+        deptAgg[dId].discharges += c.discharges || 0;
+        deptAgg[dId].occupiedSum += c.occupied_beds || 0;
+        deptAgg[dId].occRes += c.occupied_residents || 0;
+        deptAgg[dId].occRus += c.occupied_russians || 0;
+        deptAgg[dId].occEur += c.occupied_europeans || 0;
+        deptAgg[dId].count += 1;
+      });
+
+      (nursingLogs || []).forEach(n => {
+        if (deptAgg[n.department_id]) {
+          deptAgg[n.department_id].scheduledStaff += n.scheduled_staff || 0;
+          deptAgg[n.department_id].presentStaff += n.actual_present || 0;
+        }
+      });
+
+      const deptRows = Object.values(deptAgg);
+      document.getElementById('rep-census-body').innerHTML = deptRows.length === 0
+        ? `<tr><td colspan="9" class="text-center py-4 text-slate-400">لا توجد بيانات أسرة</td></tr>`
+        : deptRows.map(d => {
+            const avgOcc = d.count > 0 ? (d.occupiedSum / d.count) : 0;
+            const occP = d.totalBeds > 0 ? ((avgOcc / d.totalBeds) * 100).toFixed(1) : 0;
+            const nurP = d.scheduledStaff > 0 ? ((d.presentStaff / d.scheduledStaff) * 100).toFixed(1) : 100;
+            const avgRes = d.count > 0 ? (d.occRes / d.count).toFixed(0) : 0;
+            const avgRus = d.count > 0 ? (d.occRus / d.count).toFixed(0) : 0;
+            const avgEur = d.count > 0 ? (d.occEur / d.count).toFixed(0) : 0;
+            return `
+              <tr>
+                <td class="p-2 font-semibold text-slate-800">${d.name}</td>
+                <td class="p-2 text-center font-bold">${d.totalBeds}</td>
+                <td class="p-2 text-center text-blue-700 font-bold bg-blue-50/40">${avgRes}</td>
+                <td class="p-2 text-center text-emerald-700 font-bold bg-emerald-50/40">${avgRus}</td>
+                <td class="p-2 text-center text-amber-700 font-bold bg-amber-50/40">${avgEur}</td>
+                <td class="p-2 text-center text-emerald-700 font-bold">${d.admissions}</td>
+                <td class="p-2 text-center">${d.discharges}</td>
+                <td class="p-2 text-center font-black bg-emerald-50 text-emerald-800">${occP}%</td>
+                <td class="p-2 text-center font-bold">${nurP}%</td>
+              </tr>
+            `;
+          }).join('');
+
+      // 4. تقرير الأطباء الخارجيين
+      const { data: visitLogs } = await dbClient
+        .from('visiting_doctor_cases')
+        .select('*, doctors(full_name, specialty)')
+        .gte('case_date', fromDate)
+        .lte('case_date', toDate);
+
+      const vAgg = {};
+      (visitLogs || []).forEach(v => {
+        const docId = v.doctor_id;
+        if (!vAgg[docId]) {
+          vAgg[docId] = {
+            name: v.doctors?.full_name || 'استشاري',
+            spec: v.doctors?.specialty || '-',
+            cases: 0, orHours: 0, inDays: 0, icuDays: 0
+          };
+        }
+        vAgg[docId].cases += 1;
+        vAgg[docId].orHours += parseFloat(v.or_hours_used) || 0;
+        vAgg[docId].inDays += parseInt(v.inpatient_days) || 0;
+        vAgg[docId].icuDays += parseInt(v.icu_days) || 0;
+      });
+
+      const vRows = Object.values(vAgg);
+      document.getElementById('rep-visiting-body').innerHTML = vRows.length === 0
+        ? `<tr><td colspan="6" class="text-center py-4 text-slate-400">لا توجد حالات مسجلة</td></tr>`
+        : vRows.map(v => `
+            <tr>
+              <td class="p-2 font-semibold text-slate-800">${v.name}</td>
+              <td class="p-2 text-slate-600">${v.spec}</td>
+              <td class="p-2 text-center font-bold text-indigo-700">${v.cases}</td>
+              <td class="p-2 text-center font-black bg-indigo-50 text-indigo-800">${v.orHours} س</td>
+              <td class="p-2 text-center">${v.inDays} يوم</td>
+              <td class="p-2 text-center font-bold text-red-600">${v.icuDays} يوم</td>
+            </tr>
+          `).join('');
+    }
+
+    function renderErCharts(res, rus, eur, discharged, adm, icu, orCases) {
+      if (chartDemo) chartDemo.destroy();
+      if (chartOutcomes) chartOutcomes.destroy();
+
+      const totalF = res + rus + eur;
+      const ctxDemo = document.getElementById('chart-er-demographics').getContext('2d');
+      chartDemo = new Chart(ctxDemo, {
+        type: 'doughnut',
+        data: {
+          labels: ['مقيم', 'روسي', 'أوروبي'],
+          datasets: [{
+            data: totalF === 0 ? [1, 1, 1] : [res, rus, eur],
+            backgroundColor: totalF === 0 ? ['#cbd5e1', '#e2e8f0', '#94a3b8'] : ['#2563eb', '#10b981', '#f59e0b']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 7.5 } } } }
+        }
+      });
+
+      const ctxOut = document.getElementById('chart-er-outcomes').getContext('2d');
+      chartOutcomes = new Chart(ctxOut, {
+        type: 'bar',
+        data: {
+          labels: ['خروج', 'داخلي', 'ICU', 'عمليات'],
+          datasets: [{
+            data: [discharged, adm, icu, orCases],
+            backgroundColor: ['#64748b', '#2563eb', '#e11d48', '#9333ea']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { font: { size: 7 } } }, x: { ticks: { font: { size: 7.5 } } } }
+        }
+      });
+    }
+
+    // إدارة الأطباء
+    document.getElementById('add-doctor-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        full_name: document.getElementById('new-doc-name').value.trim(),
+        specialty: document.getElementById('new-doc-spec').value.trim(),
+        contract_type: document.getElementById('new-doc-type').value,
+        department_id: document.getElementById('new-doc-dept').value,
+        is_active: true
+      };
+      const { error } = await dbClient.from('doctors').insert([payload]);
+      if (error) alert('خطأ: ' + error.message);
+      else {
+        alert('تمت إضافة الطبيب بنجاح!');
+        document.getElementById('new-doc-name').value = '';
+        document.getElementById('new-doc-spec').value = '';
+        await loadInitialData();
+      }
+    });
+
+    async function toggleDoctorStatus(docId, currentStatus) {
+      const { error } = await dbClient.from('doctors').update({ is_active: !currentStatus }).eq('id', docId);
+      if (!error) await loadInitialData();
+    }
+
+    async function deleteDoctor(docId) {
+      if (confirm('هل أنت متأكد من الحذف؟')) {
+        const { error } = await dbClient.from('doctors').delete().eq('id', docId);
+        if (error) alert('لا يمكن الحذف لوجود سجلات سابقة، يفضل الإيقاف المؤقت');
+        else await loadInitialData();
+      }
+    }
+
+    async function updateDeptBeds(deptId, btnElement) {
+      const row = btnElement.closest('tr');
+      const beds = parseInt(row.querySelector('.input-total-beds').value) || 0;
+      const { error } = await dbClient.from('departments').update({ total_beds: beds }).eq('id', deptId);
+      if (!error) {
+        alert('تم تحديث السعة بنجاح!');
+        await loadInitialData();
+      }
+    }
+
+    // حفظ كشوفات العيادات بالفئات
+    document.getElementById('clinic-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const status = document.getElementById('clinic-status');
+      const logDate = document.getElementById('clinic-date').value;
+      status.textContent = 'جاري الحفظ...';
+
+      const rows = document.querySelectorAll('#clinic-table-body tr');
+      const payload = Array.from(rows).map(r => ({
+        log_date: logDate,
+        doctor_id: r.getAttribute('data-doc-id'),
+        residents_count: parseInt(r.querySelector('.input-res').value) || 0,
+        russians_count: parseInt(r.querySelector('.input-rus').value) || 0,
+        europeans_count: parseInt(r.querySelector('.input-eur').value) || 0,
+        total_consultations: parseInt(r.querySelector('.input-consults').value) || 0,
+        lab_referrals: parseInt(r.querySelector('.input-lab').value) || 0,
+        radiology_referrals: parseInt(r.querySelector('.input-rad').value) || 0,
+        surgical_referrals: parseInt(r.querySelector('.input-surg').value) || 0,
+        admission_referrals: parseInt(r.querySelector('.input-adm').value) || 0,
+        cross_specialty_referrals: parseInt(r.querySelector('.input-cross').value) || 0,
+        recorded_by: currentUser.id
+      }));
+
+      const { error } = await dbClient.from('daily_clinic_logs').upsert(payload, { onConflict: 'log_date,doctor_id' });
+      status.textContent = error ? 'خطأ في الحفظ' : 'تم حفظ كشوفات العيادات وتوزيع الفئات بنجاح ✓';
+      status.className = error ? 'text-sm text-red-600' : 'text-sm text-emerald-600 font-semibold';
+    });
+
+    // حفظ حالة خارجي
+    document.getElementById('visiting-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const orDept = departments.find(d => d.type === 'or') || departments[0];
+      const payload = {
+        doctor_id: document.getElementById('visiting-doctor-select').value,
+        department_id: orDept.id,
+        operation_name: document.getElementById('visiting-op-name').value,
+        or_hours_used: parseFloat(document.getElementById('visiting-or-hours').value) || 0,
+        inpatient_days: parseInt(document.getElementById('visiting-inpatient-days').value) || 0,
+        icu_days: parseInt(document.getElementById('visiting-icu-days').value) || 0,
+        recorded_by: currentUser.id
+      };
+      const { error } = await dbClient.from('visiting_doctor_cases').insert([payload]);
+      if (!error) {
+        alert('تم تسجيل حالة الطبيب الخارجي بنجاح!');
+        document.getElementById('visiting-op-name').value = '';
+        loadVisitingCases();
+      }
+    });
+
+    async function loadVisitingCases() {
+      const { data } = await dbClient.from('visiting_doctor_cases').select('*, doctors(full_name)').order('created_at', { ascending: false });
+      document.getElementById('visiting-table-body').innerHTML = (data || []).map(c => `
+        <tr>
+          <td class="p-3 font-semibold">${c.doctors?.full_name || 'طبيب'}</td>
+          <td class="p-3">${c.operation_name}</td>
+          <td class="p-3 font-bold text-indigo-600">${c.or_hours_used} ساعة</td>
+          <td class="p-3">${c.inpatient_days} يوم</td>
+          <td class="p-3">${c.icu_days} يوم</td>
+        </tr>
+      `).join('');
+    }
+
+    // حفظ التمريض والأسرة
+    document.getElementById('census-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const status = document.getElementById('census-status');
+      const logDate = document.getElementById('census-date').value;
+      const logShift = document.getElementById('census-shift').value;
+      status.textContent = 'جاري الحفظ...';
+
+      const censusRows = document.querySelectorAll('#census-table-body tr');
+      const censusPayload = Array.from(censusRows).map(row => ({
+        log_date: logDate,
+        shift: logShift,
+        department_id: row.getAttribute('data-dept-id'),
+        occupied_beds: parseInt(row.querySelector('.input-occupied').value) || 0,
+        occupied_residents: parseInt(row.querySelector('.input-occ-res').value) || 0,
+        occupied_russians: parseInt(row.querySelector('.input-occ-rus').value) || 0,
+        occupied_europeans: parseInt(row.querySelector('.input-occ-eur').value) || 0,
+        new_admissions: parseInt(row.querySelector('.input-admissions').value) || 0,
+        discharges: parseInt(row.querySelector('.input-discharges').value) || 0,
+        transfers_to_icu: parseInt(row.querySelector('.input-icu').value) || 0,
+        transfers_to_or: parseInt(row.querySelector('.input-or').value) || 0,
+        recorded_by: currentUser.id
+      }));
+
+      await dbClient.from('daily_bed_census').upsert(censusPayload, { onConflict: 'log_date,shift,department_id' });
+
+      const nursingRows = document.querySelectorAll('#nursing-table-body tr');
+      const nursingPayload = Array.from(nursingRows).map(row => ({
+        log_date: logDate,
+        shift: logShift,
+        department_id: row.getAttribute('data-dept-id'),
+        scheduled_staff: parseInt(row.querySelector('.input-scheduled').value) || 0,
+        actual_present: parseInt(row.querySelector('.input-present').value) || 0,
+        absent_count: parseInt(row.querySelector('.input-absent').value) || 0,
+        notes: row.querySelector('.input-notes').value || null,
+        recorded_by: currentUser.id
+      }));
+
+      await dbClient.from('daily_nursing_shifts').upsert(nursingPayload, { onConflict: 'log_date,shift,department_id' });
+      status.textContent = 'تم حفظ بيانات الوردية والأسرة بنجاح ✓';
+      status.className = 'text-sm text-emerald-600 font-semibold';
+    });
+
+    async function handleLogout() {
+      await dbClient.auth.signOut();
+      window.location.reload();
+    }
+  </script>
+</body>
+</html>
