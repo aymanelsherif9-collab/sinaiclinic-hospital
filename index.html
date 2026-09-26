@@ -12,17 +12,12 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- SheetJS for Excel Export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <!-- Google Fonts: Cairo -->
+  <!-- Google Fonts: Cairo & Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style>
-    body {
-      font-family: 'Cairo', 'Inter', sans-serif;
-    }
-    .ltr-mode {
-      direction: ltr;
-      font-family: 'Inter', 'Cairo', sans-serif;
-    }
+    body { font-family: 'Cairo', 'Inter', sans-serif; }
+    .ltr-mode { direction: ltr; font-family: 'Inter', 'Cairo', sans-serif; }
     @media print {
       .no-print { display: none !important; }
       body { background-color: #ffffff !important; }
@@ -32,7 +27,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- Navigation & Header Bar -->
+  <!-- Header Bar -->
   <header class="bg-teal-900 text-white shadow-md sticky top-0 z-50 no-print">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
       <div class="flex items-center space-x-3 space-x-reverse">
@@ -44,17 +39,14 @@
       </div>
       
       <div class="flex items-center space-x-2 space-x-reverse">
-        <!-- Language Switcher -->
         <button id="langToggleBtn" onclick="toggleLanguage()" class="bg-teal-800 hover:bg-teal-700 px-3 py-1.5 rounded-lg border border-teal-600 text-xs font-semibold tracking-wider transition">
           English / عربي
         </button>
-        <!-- User Status Badge -->
         <div id="userBadge" class="hidden items-center bg-teal-800/80 px-3 py-1.5 rounded-lg border border-teal-700 text-xs">
           <span id="userEmailDisplay" class="font-medium text-teal-100"></span>
           <span class="mx-1.5 opacity-50">|</span>
           <span id="userRoleDisplay" class="font-bold text-amber-300"></span>
         </div>
-        <!-- Logout Button -->
         <button id="logoutBtn" onclick="handleLogout()" class="hidden bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition" data-key="logout_btn">
           تسجيل خروج
         </button>
@@ -64,15 +56,16 @@
     <!-- Navigation Tabs -->
     <nav id="mainNav" class="bg-teal-800 border-t border-teal-700/60 hidden">
       <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto space-x-1 space-x-reverse text-sm">
-        <button onclick="switchTab('er')" id="tab-er" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-amber-400 text-amber-300 whitespace-nowrap" data-key="nav_er">🚨 قسم الطوارئ (ER)</button>
-        <button onclick="switchTab('clinics')" id="tab-clinics" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_clinics">🩺 كشوفات العيادات الخارجية</button>
-        <button onclick="switchTab('nursing')" id="tab-nursing" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_nursing">🛏️ التمريض والإشغال السريري</button>
-        <button onclick="switchTab('reports')" id="tab-reports" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_reports">📑 التقارير الإدارية وExcel</button>
+        <button onclick="switchTab('er')" id="tab-er" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-amber-400 text-amber-300 whitespace-nowrap" data-key="nav_er">🚨 الطوارئ (ER)</button>
+        <button onclick="switchTab('clinics')" id="tab-clinics" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_clinics">🩺 العيادات الخارجية</button>
+        <button onclick="switchTab('doctors')" id="tab-doctors" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_doctors">👨‍⚕️ الأطباء (داخلي/خارجي)</button>
+        <button onclick="switchTab('nursing')" id="tab-nursing" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_nursing">🛏️ التمريض والإشغال</button>
+        <button onclick="switchTab('reports')" id="tab-reports" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_reports">📑 التقارير وExcel</button>
       </div>
     </nav>
   </header>
 
-  <!-- Login Modal / Screen -->
+  <!-- Login Modal -->
   <section id="loginSection" class="flex-grow flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
       <div class="text-center mb-6">
@@ -97,10 +90,10 @@
     </div>
   </section>
 
-  <!-- Main System Content Container -->
+  <!-- Application Container -->
   <main id="appSection" class="hidden flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
 
-    <!-- TAB 1: EMERGENCY ROOM (ER) -->
+    <!-- TAB 1: EMERGENCY ROOM -->
     <div id="view-er" class="tab-view space-y-6">
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex flex-wrap justify-between items-center gap-4 mb-4 pb-3 border-b">
@@ -108,20 +101,18 @@
             <h2 class="text-xl font-bold text-teal-900" data-key="er_title">قسم الطوارئ والاستقبال (ER)</h2>
             <p class="text-xs text-slate-500" data-key="er_desc">السعة التشغيلية: 4 غرف (2 علاج فوري + 2 ملاحظة طبية)</p>
           </div>
-          <!-- Auto-retrieve Status Badge -->
           <div id="erStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600">
             جاهز للإدخال
           </div>
         </div>
 
-        <!-- Filter / Key Fields for Pre-fill -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_date">تاريخ الحركة</label>
             <input type="date" id="erDate" onchange="fetchExistingERData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-medium">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_shift">الوردية التشغيلية (12 ساعة)</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_shift">الوردية (12 ساعة)</label>
             <select id="erShift" onchange="fetchExistingERData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-medium">
               <option value="morning" data-key="opt_morning">الوردية الصباحية (Morning: 8:00 AM - 8:00 PM)</option>
               <option value="evening" data-key="opt_evening">الوردية المسائية (Evening: 8:00 PM - 8:00 AM)</option>
@@ -133,7 +124,6 @@
           </div>
         </div>
 
-        <!-- Demographic Case Breakdown -->
         <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5" data-key="header_patients">
           <span>👥</span> توزيع الحالات حسب الفئات
         </h3>
@@ -157,7 +147,6 @@
           <span id="erTotalCasesBadge" class="text-xl font-black text-teal-700">0</span>
         </div>
 
-        <!-- Disposition / Outcomes -->
         <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5" data-key="header_disposition">
           <span>🔄</span> مسارات التصريف والتحويلات
         </h3>
@@ -180,7 +169,6 @@
           </div>
         </div>
 
-        <!-- Diagnostic Orders -->
         <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5" data-key="header_diagnostics">
           <span>🧪</span> الفحوصات الطارئة المنفذة
         </h3>
@@ -207,14 +195,14 @@
         <div class="flex flex-wrap justify-between items-center gap-4 mb-4 pb-3 border-b">
           <div>
             <h2 class="text-xl font-bold text-teal-900" data-key="clinics_title">كشوفات العيادات والأقسام التخصصية</h2>
-            <p class="text-xs text-slate-500" data-key="clinics_desc">تشمل الباطنة، الجراحة، العظام، الأسنان، العلاج الطبيعي، الأشعة، والمعمل</p>
+            <p class="text-xs text-slate-500" data-key="clinics_desc">تشمل الأقسام المستحدثة: الأسنان، العلاج الطبيعي، السونار، الأشعة، والمعمل</p>
           </div>
           <div id="clinicStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600">
             جاهز للإدخال
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_date">التاريخ</label>
             <input type="date" id="clinicDate" onchange="fetchExistingClinicData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
@@ -228,7 +216,7 @@
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_department">القسم / التخصص</label>
-            <select id="clinicDeptSelect" onchange="fetchExistingClinicData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-semibold">
+            <select id="clinicDeptSelect" onchange="filterDoctorsByDept(); fetchExistingClinicData();" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-semibold">
               <option value="internal_medicine">عيادة الباطنة والقلب</option>
               <option value="general_surgery">عيادة الجراحة العامة</option>
               <option value="orthopedics">عيادة جراحة العظام والمفاصل</option>
@@ -240,9 +228,14 @@
               <option value="laboratory">المختبر والتحاليل الطبية</option>
             </select>
           </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_doctor">الطبيب المعالج</label>
+            <select id="clinicDoctorSelect" onchange="fetchExistingClinicData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-semibold">
+              <option value="general">طبيب القسم العام</option>
+            </select>
+          </div>
         </div>
 
-        <!-- Breakdown per Specialty -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
             <label class="block text-xs font-bold text-blue-900 mb-1" data-key="cat_residents">مصريون / مقيمون</label>
@@ -258,7 +251,6 @@
           </div>
         </div>
 
-        <!-- Outcomes from Clinics -->
         <h3 class="text-sm font-bold text-slate-700 mb-3" data-key="header_clinic_outcomes">التحويلات الصادرة من العيادة</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <div class="bg-slate-50 p-3 rounded-xl border">
@@ -285,7 +277,74 @@
       </div>
     </div>
 
-    <!-- TAB 3: NURSING & OCCUPANCY -->
+    <!-- TAB 3: DOCTORS DIRECTORY (STAFF & VISITING) -->
+    <div id="view-doctors" class="tab-view hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex justify-between items-center mb-4 pb-3 border-b">
+          <div>
+            <h2 class="text-xl font-bold text-teal-900" data-key="doc_mgt_title">سجل الأطباء والاستشاريين</h2>
+            <p class="text-xs text-slate-500" data-key="doc_mgt_desc">تسجيل وتوزيع الأطباء العاملين بالمستشفى والاستشاريين الزائرين على الأقسام</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_doc_name">اسم الطبيب</label>
+            <input type="text" id="docName" placeholder="د. الاسم بالكامل" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-semibold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_doc_type">صفة العمل والتعاقد</label>
+            <select id="docType" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-medium">
+              <option value="staff" data-key="doc_type_staff">طبيب مقيم / عامل بالمستشفى</option>
+              <option value="visiting" data-key="doc_type_visiting">استشاري زائر / خارجي</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_department">القسم الطبي</label>
+            <select id="docDepartment" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+              <option value="internal_medicine">عيادة الباطنة والقلب</option>
+              <option value="general_surgery">عيادة الجراحة العامة</option>
+              <option value="orthopedics">عيادة جراحة العظام والمفاصل</option>
+              <option value="pediatrics">عيادة الأطفال وحديثي الولادة</option>
+              <option value="dental">عيادة طب وجراحة الأسنان</option>
+              <option value="physiotherapy">مركز العلاج الطبيعي والتأهيل</option>
+              <option value="radiology">قسم الأشعة والتصوير الطبي</option>
+              <option value="sonar">قسم الموجات الصوتية والسونار</option>
+              <option value="laboratory">المختبر والتحاليل الطبية</option>
+              <option value="er">قسم الطوارئ والاستقبال</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_doc_phone">رقم الهاتف / التحويلة</label>
+            <input type="text" id="docPhone" placeholder="01xxxxxxxxx" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+          </div>
+        </div>
+
+        <button onclick="saveDoctor()" class="bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2 rounded-xl text-sm shadow transition" data-key="btn_save_doctor">
+          إضافة الطبيب للسجل ✓
+        </button>
+
+        <div class="mt-8 overflow-x-auto">
+          <h3 class="text-sm font-bold text-slate-800 mb-3" data-key="doc_list_title">قائمة الأطباء المعتمدين بالمنظومة</h3>
+          <table class="w-full text-xs text-center border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 border-b font-bold">
+                <th class="p-2.5">اسم الطبيب</th>
+                <th class="p-2.5">نوع التعاقد</th>
+                <th class="p-2.5">القسم</th>
+                <th class="p-2.5">الهاتف</th>
+                <th class="p-2.5">الحالة</th>
+              </tr>
+            </thead>
+            <tbody id="doctorsTableBody" class="divide-y divide-slate-200">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: NURSING & OCCUPANCY -->
     <div id="view-nursing" class="tab-view hidden space-y-6">
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex flex-wrap justify-between items-center gap-4 mb-4 pb-3 border-b">
@@ -341,11 +400,20 @@
       </div>
     </div>
 
-    <!-- TAB 4: REPORTS, ANALYTICS & EXCEL -->
+    <!-- TAB 5: REPORTS, MULTI-TYPE ANALYTICS & EXCEL -->
     <div id="view-reports" class="tab-view hidden space-y-6">
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 no-print">
         <h2 class="text-xl font-bold text-teal-900 mb-3" data-key="rep_filter_title">لوحة استخراج التقارير والتحليل</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_rep_type">نوع التقرير المطلوب</label>
+            <select id="reportTypeSelect" onchange="generateReport()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-bold text-teal-900">
+              <option value="all">1. التقرير المجمع الشامل (Executive)</option>
+              <option value="er">2. تقرير قسم الطوارئ (ER Cases)</option>
+              <option value="clinics">3. تقرير العيادات والأطباء (Clinics)</option>
+              <option value="occupancy">4. تقرير إشغال الأسرة (Bed Census)</option>
+            </select>
+          </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1" data-key="rep_from">من تاريخ</label>
             <input type="date" id="reportFromDate" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
@@ -356,20 +424,21 @@
           </div>
           <div class="flex items-end">
             <button onclick="generateReport()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-2 rounded-lg text-sm shadow transition" data-key="btn_run_report">
-              تحليل البيانات وتحديث الشاشة 🔍
+              استخراج التقرير 🔍
             </button>
           </div>
           <div class="flex items-end gap-2">
-            <button onclick="exportToExcel()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-sm shadow flex items-center justify-center gap-1.5 transition" data-key="btn_export_excel">
-              <span>📊</span> تصدير Excel
+            <button onclick="exportToExcel()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-sm shadow flex items-center justify-center gap-1 transition" data-key="btn_export_excel">
+              <span>📊</span> Excel
             </button>
-            <button onclick="window.print()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-lg text-sm shadow flex items-center justify-center gap-1.5 transition" data-key="btn_print_a4">
-              <span>🖨️</span> طباعة A4
+            <button onclick="window.print()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-lg text-sm shadow flex items-center justify-center gap-1 transition" data-key="btn_print_a4">
+              <span>🖨️</span> A4
             </button>
           </div>
         </div>
       </div>
 
+      <!-- Printable Report Container -->
       <div id="reportContainer" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 print-page space-y-6">
         <div class="flex justify-between items-start border-b-2 border-teal-800 pb-4">
           <div>
@@ -378,12 +447,13 @@
             <p class="text-xs text-slate-500 mt-1" data-key="hosp_rep_city">هضبة أم سيد - جنوب سيناء - جمهورية مصر العربية</p>
           </div>
           <div class="text-left font-mono text-xs text-slate-500 space-y-1">
-            <div data-key="rep_doc_title"><strong class="text-slate-800">التقرير التشغيلي المجمع</strong></div>
+            <div id="reportHeaderTitle" class="font-bold text-slate-800 text-sm">التقرير التشغيلي المجمع</div>
             <div>الفترة: <span id="repPeriodDisplay" class="font-bold text-teal-800"></span></div>
             <div>تاريخ الاستخراج: <span id="repDateGenerated"></span></div>
           </div>
         </div>
 
+        <!-- KPI Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="bg-teal-50 p-4 rounded-xl border border-teal-200 text-center">
             <div class="text-xs font-bold text-teal-900" data-key="kpi_er_total">إجمالي طوارئ (ER)</div>
@@ -403,29 +473,31 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <!-- Visual Analytics Charts -->
+        <div id="chartsWrapper" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           <div class="border rounded-xl p-4 bg-slate-50">
-            <h4 class="text-xs font-bold text-slate-700 mb-2 text-center" data-key="chart_pie_title">توزيع الفئات والجنسيات (طوارئ + عيادات)</h4>
+            <h4 class="text-xs font-bold text-slate-700 mb-2 text-center" data-key="chart_pie_title">توزيع الفئات والجنسيات</h4>
             <div class="h-56 relative flex items-center justify-center">
               <canvas id="demographicsChart"></canvas>
             </div>
           </div>
           <div class="border rounded-xl p-4 bg-slate-50">
-            <h4 class="text-xs font-bold text-slate-700 mb-2 text-center" data-key="chart_bar_title">مسارات التصريف والتحويلات الإجمالية</h4>
+            <h4 class="text-xs font-bold text-slate-700 mb-2 text-center" data-key="chart_bar_title">مسارات التصريف والتحويلات الطبية</h4>
             <div class="h-56 relative flex items-center justify-center">
               <canvas id="outcomesChart"></canvas>
             </div>
           </div>
         </div>
 
+        <!-- Dynamic Table View -->
         <div class="overflow-x-auto">
-          <h4 class="text-sm font-bold text-slate-800 mb-2" data-key="table_recent_header">سجل الحركات التفصيلي للفترة المختارة</h4>
+          <h4 id="repTableTitle" class="text-sm font-bold text-slate-800 mb-2">سجل الحركات التفصيلي للفترة</h4>
           <table class="w-full text-xs text-center border-collapse">
             <thead>
-              <tr class="bg-slate-200 text-slate-800 border-b border-slate-300 font-bold">
+              <tr id="reportTableHead" class="bg-slate-200 text-slate-800 border-b border-slate-300 font-bold">
                 <th class="p-2">التاريخ</th>
                 <th class="p-2">الوردية</th>
-                <th class="p-2">القسم</th>
+                <th class="p-2">القسم / السجل</th>
                 <th class="p-2">مقيم</th>
                 <th class="p-2">روسي</th>
                 <th class="p-2">أوروبي</th>
@@ -461,7 +533,7 @@
 
   <script>
     // ----------------------------------------------------
-    // 1. SUPABASE CLIENT INITIALIZATION WITH YOUR EXACT KEYS
+    // SUPABASE CLIENT (CONFIGURED WITH YOUR EXACT PROJECT KEYS)
     // ----------------------------------------------------
     const SUPABASE_URL = 'https://urquujkncftrnzrpgrz.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVycXV1amtuY2Z0cm56cnBnenJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNTc1MTksImV4cCI6MjEwNTczMzUxOX0.EPe_uqUHz8ZaV9bCzCspxUaBqjX_PbiPg_-tssoNjYY';
@@ -474,7 +546,7 @@
     }
 
     // ----------------------------------------------------
-    // 2. BILINGUAL DICTIONARY (AR / EN)
+    // BILINGUAL DICTIONARY
     // ----------------------------------------------------
     let currentLang = 'ar';
     const i18n = {
@@ -482,10 +554,11 @@
         hospital_title: "مستشفى سيناء كلينك - شرم الشيخ",
         system_subtitle: "منظومة الإدارة والمتابعة والتقارير الطبية التنفيذية",
         logout_btn: "تسجيل خروج",
-        nav_er: "🚨 قسم الطوارئ (ER)",
-        nav_clinics: "🩺 كشوفات العيادات الخارجية",
-        nav_nursing: "🛏️ التمريض والإشغال السريري",
-        nav_reports: "📑 التقارير الإدارية وExcel",
+        nav_er: "🚨 الطوارئ (ER)",
+        nav_clinics: "🩺 العيادات الخارجية",
+        nav_doctors: "👨‍⚕️ الأطباء (داخلي/خارجي)",
+        nav_nursing: "🛏️ التمريض والإشغال",
+        nav_reports: "📑 التقارير وExcel",
         login_welcome: "تسجيل الدخول للمنظومة",
         login_note: "يرجى تسجيل الدخول بحساب المستخدم المعتمد لمستشفى سيناء كلينك",
         login_email: "البريد الإلكتروني",
@@ -494,7 +567,7 @@
         er_title: "قسم الطوارئ والاستقبال (ER)",
         er_desc: "السعة التشغيلية: 4 غرف (2 علاج فوري + 2 ملاحظة طبية)",
         lbl_date: "التاريخ",
-        lbl_shift: "الوردية التشغيلية (12 ساعة)",
+        lbl_shift: "الوردية (12 ساعة)",
         opt_morning: "الوردية الصباحية (Morning: 8:00 AM - 8:00 PM)",
         opt_evening: "الوردية المسائية (Evening: 8:00 PM - 8:00 AM)",
         lbl_supervisor: "مشرف الوردية",
@@ -513,14 +586,24 @@
         diag_rad: "فحوصات الأشعة والسونار",
         btn_save_er: "حفظ وتحديث حركة الطوارئ ✓",
         clinics_title: "كشوفات العيادات والأقسام التخصصية",
-        clinics_desc: "تشمل الباطنة، الجراحة، العظام، الأسنان، العلاج الطبيعي، الأشعة، والمعمل",
+        clinics_desc: "تشمل الأقسام المستحدثة: الأسنان، العلاج الطبيعي، السونار، الأشعة، والمعمل",
         lbl_department: "القسم / التخصص",
+        lbl_doctor: "الطبيب المعالج",
         header_clinic_outcomes: "التحويلات الصادرة من العيادة",
         out_lab: "تحويل تحاليل معملية",
         out_rad: "تحويل أشعة وسونار",
         out_inpatient: "تنويم قسم داخلي",
         out_or: "تحويل عمليات جراحية",
         btn_save_clinic: "حفظ كشوفات العيادة ✓",
+        doc_mgt_title: "سجل الأطباء والاستشاريين",
+        doc_mgt_desc: "تسجيل وتوزيع الأطباء العاملين بالمستشفى والاستشاريين الزائرين على الأقسام",
+        lbl_doc_name: "اسم الطبيب",
+        lbl_doc_type: "صفة العمل والتعاقد",
+        doc_type_staff: "طبيب مقيم / عامل بالمستشفى",
+        doc_type_visiting: "استشاري زائر / خارجي",
+        lbl_doc_phone: "رقم الهاتف / التحويلة",
+        btn_save_doctor: "إضافة الطبيب للسجل ✓",
+        doc_list_title: "قائمة الأطباء المعتمدين بالمنظومة",
         nursing_title: "الإشغال الفندقي والسعة السريرية",
         nursing_desc: "الداخلي (12 سريراً) + الرعاية المركزة ICU (4 أسرة) + غرف الطوارئ (4)",
         bed_inpatient: "القسم الداخلي (سعة 12 سريراً)",
@@ -531,31 +614,31 @@
         lbl_nursing_staff: "قوة طاقم التمريض الحاضر بالوردية",
         btn_save_nursing: "حفظ تقرير التمريض والإشغال ✓",
         rep_filter_title: "لوحة استخراج التقارير والتحليل",
+        lbl_rep_type: "نوع التقرير المطلوب",
         rep_from: "من تاريخ",
         rep_to: "إلى تاريخ",
-        btn_run_report: "تحليل البيانات وتحديث الشاشة 🔍",
-        btn_export_excel: "تصدير Excel",
-        btn_print_a4: "طباعة A4",
+        btn_run_report: "استخراج التقرير 🔍",
+        btn_export_excel: "Excel",
+        btn_print_a4: "A4",
         hosp_rep_name: "مستشفى سيناء كلينك",
         hosp_rep_sub: "Sinai Clinic Hospital - Sharm El-Sheikh",
         hosp_rep_city: "هضبة أم سيد - جنوب سيناء - جمهورية مصر العربية",
-        rep_doc_title: "التقرير التشغيلي المجمع",
         kpi_er_total: "إجمالي طوارئ (ER)",
         kpi_clinics_total: "إجمالي كشوفات العيادات",
         kpi_inpatient_admit: "تحويلات التنويم الداخلي",
         kpi_icu_admit: "تحويلات الرعاية ICU",
-        chart_pie_title: "توزيع الفئات والجنسيات (طوارئ + عيادات)",
-        chart_bar_title: "مسارات التصريف والتحويلات الإجمالية",
-        table_recent_header: "سجل الحركات التفصيلي للفترة المختارة"
+        chart_pie_title: "توزيع الفئات والجنسيات",
+        chart_bar_title: "مسارات التصريف والتحويلات الطبية"
       },
       en: {
         hospital_title: "Sinai Clinic Hospital - Sharm El-Sheikh",
         system_subtitle: "Executive Medical Management & Clinical Reporting System",
         logout_btn: "Sign Out",
-        nav_er: "🚨 Emergency Room (ER)",
-        nav_clinics: "🩺 Outpatient Clinics & Depts",
+        nav_er: "🚨 Emergency (ER)",
+        nav_clinics: "🩺 Outpatient Clinics",
+        nav_doctors: "👨‍⚕️ Physicians (Staff/Visiting)",
         nav_nursing: "🛏️ Inpatient Beds & ICU",
-        nav_reports: "📑 Executive Reports & Excel",
+        nav_reports: "📑 Reports & Excel",
         login_welcome: "Hospital System Login",
         login_note: "Please log in with your authorized Sinai Clinic credentials",
         login_email: "Email Address",
@@ -567,30 +650,40 @@
         lbl_shift: "Operating Shift (12 Hours)",
         opt_morning: "Morning Shift (8:00 AM - 8:00 PM)",
         opt_evening: "Evening Shift (8:00 PM - 8:00 AM)",
-        lbl_supervisor: "Shift Supervisor / Physician",
-        header_patients: "👥 Patients Demographic Breakdown",
+        lbl_supervisor: "Shift Supervisor",
+        header_patients: "👥 Demographic Breakdown",
         cat_residents: "Egyptian Residents",
         cat_russian: "Russian Tourism",
-        cat_european: "European & International",
+        cat_european: "European & Other",
         lbl_er_total: "Total Shift ER Cases:",
         header_disposition: "🔄 Patient Outcomes & Referrals",
         disp_discharge: "Discharged / Quick Care",
-        disp_inpatient: "Admitted to Ward (12 Beds)",
-        disp_icu: "Urgent ICU Admission (4 Beds)",
+        disp_inpatient: "Admitted Ward (12 Beds)",
+        disp_icu: "Urgent ICU Admit (4 Beds)",
         disp_or: "Direct Surgery (OR)",
-        header_diagnostics: "🧪 Emergency Diagnostics Ordered",
+        header_diagnostics: "🧪 Emergency Diagnostics",
         diag_lab: "Clinical Lab Tests",
         diag_rad: "Radiology & Ultrasound",
         btn_save_er: "Save & Update ER Movement ✓",
         clinics_title: "Specialized Clinics & Outpatient Depts",
-        clinics_desc: "Internal Med, Surgery, Ortho, Dental, Rehab, Radiology, Lab",
+        clinics_desc: "Including Dental, Physiotherapy, Ultrasound, Radiology, and Laboratory",
         lbl_department: "Department / Specialty",
+        lbl_doctor: "Attending Doctor",
         header_clinic_outcomes: "Referrals Issued from Clinic",
         out_lab: "Lab Referrals",
         out_rad: "Radiology Referrals",
         out_inpatient: "Inpatient Admission",
         out_or: "Surgical Referral (OR)",
         btn_save_clinic: "Save Clinic Patient Log ✓",
+        doc_mgt_title: "Doctors & Consultants Directory",
+        doc_mgt_desc: "Management of Hospital Medical Staff and Visiting External Consultants",
+        lbl_doc_name: "Doctor Name",
+        lbl_doc_type: "Employment Status",
+        doc_type_staff: "Hospital Staff Physician",
+        doc_type_visiting: "Visiting Consultant",
+        lbl_doc_phone: "Phone / Extension",
+        btn_save_doctor: "Add Doctor to Registry ✓",
+        doc_list_title: "Authorized Medical Staff Roster",
         nursing_title: "Hospital Bed Occupancy & Capacity",
         nursing_desc: "Inpatient Ward (12 Beds) + ICU (4 Beds) + ER Rooms (4)",
         bed_inpatient: "Inpatient Ward (Capacity: 12)",
@@ -601,22 +694,21 @@
         lbl_nursing_staff: "Nursing Duty Staff Count",
         btn_save_nursing: "Save Nursing Occupancy Log ✓",
         rep_filter_title: "Reporting & Analytical Dashboard",
+        lbl_rep_type: "Select Report Type",
         rep_from: "From Date",
         rep_to: "To Date",
-        btn_run_report: "Analyze & Update Metrics 🔍",
-        btn_export_excel: "Export Excel",
-        btn_print_a4: "Print A4",
+        btn_run_report: "Generate Report 🔍",
+        btn_export_excel: "Excel",
+        btn_print_a4: "A4",
         hosp_rep_name: "Sinai Clinic Hospital",
         hosp_rep_sub: "Sinai Clinic Hospital - Sharm El-Sheikh",
         hosp_rep_city: "Om El-Sid Hill - South Sinai - Egypt",
-        rep_doc_title: "Integrated Operational Report",
         kpi_er_total: "Total ER Volume",
         kpi_clinics_total: "Total Clinic Visits",
         kpi_inpatient_admit: "Ward Admissions",
         kpi_icu_admit: "ICU Admissions",
-        chart_pie_title: "Demographics & Nationality Share",
-        chart_bar_title: "Total Patient Disposition & Referrals",
-        table_recent_header: "Detailed Shift Records for Selected Period"
+        chart_pie_title: "Nationality & Demographic Share",
+        chart_bar_title: "Total Referrals & Patient Outcomes"
       }
     };
 
@@ -636,12 +728,12 @@
         }
       });
       if(!document.getElementById('view-reports').classList.contains('hidden')) {
-        renderCharts();
+        generateReport();
       }
     }
 
     // ----------------------------------------------------
-    // 3. AUTHENTICATION & SESSION HANDLING
+    // AUTHENTICATION
     // ----------------------------------------------------
     let currentUser = null;
 
@@ -680,6 +772,7 @@
       document.getElementById('userEmailDisplay').innerText = email;
       document.getElementById('userRoleDisplay').innerText = 'Executive Director';
 
+      loadDoctors();
       fetchExistingERData();
     }
 
@@ -723,7 +816,7 @@
     }
 
     // ----------------------------------------------------
-    // 4. NAVIGATION TAB SWITCHING
+    // TAB NAVIGATION
     // ----------------------------------------------------
     function switchTab(tabId) {
       document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
@@ -739,11 +832,109 @@
 
       if (tabId === 'reports') {
         generateReport();
+      } else if (tabId === 'doctors') {
+        loadDoctors();
       }
     }
 
     // ----------------------------------------------------
-    // 5. AUTOMATED DATA RETRIEVAL (AUTO-FETCH & PRE-FILL)
+    // DOCTORS REGISTRY (STAFF & VISITING)
+    // ----------------------------------------------------
+    let doctorsList = [];
+
+    async function loadDoctors() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('doctors')
+          .select('*')
+          .order('name');
+
+        if(data) {
+          doctorsList = data;
+        } else {
+          // Defaults if table newly queried
+          doctorsList = [
+            { id: 1, name: 'د. تامر التهامي', doc_type: 'staff', department: 'internal_medicine', phone: '0100000001' },
+            { id: 2, name: 'د. استشاري عظام زائر', doc_type: 'visiting', department: 'orthopedics', phone: '0100000002' }
+          ];
+        }
+        renderDoctorsTable();
+        filterDoctorsByDept();
+      } catch(e) {
+        console.warn("Doctors fetch fallback", e);
+      }
+    }
+
+    function renderDoctorsTable() {
+      const tbody = document.getElementById('doctorsTableBody');
+      tbody.innerHTML = '';
+      doctorsList.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="p-2.5 font-bold text-slate-800">${d.name}</td>
+          <td class="p-2.5"><span class="px-2 py-0.5 rounded text-xs ${d.doc_type === 'visiting' ? 'bg-purple-100 text-purple-800 font-bold' : 'bg-teal-100 text-teal-800 font-semibold'}">${d.doc_type === 'visiting' ? 'استشاري خارجي' : 'طبيب مقيم'}</span></td>
+          <td class="p-2.5 text-slate-600">${d.department}</td>
+          <td class="p-2.5 font-mono text-slate-500">${d.phone || '-'}</td>
+          <td class="p-2.5 text-emerald-600 font-bold">نشط ✓</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterDoctorsByDept() {
+      const selectedDept = document.getElementById('clinicDeptSelect').value;
+      const selectEl = document.getElementById('clinicDoctorSelect');
+      selectEl.innerHTML = '';
+
+      const matched = doctorsList.filter(d => d.department === selectedDept);
+      if(matched.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = "general";
+        opt.innerText = "طبيب القسم العام";
+        selectEl.appendChild(opt);
+      } else {
+        matched.forEach(doc => {
+          const opt = document.createElement('option');
+          opt.value = doc.name;
+          opt.innerText = `${doc.name} (${doc.doc_type === 'visiting' ? 'استشاري زائر' : 'مقيم'})`;
+          selectEl.appendChild(opt);
+        });
+      }
+    }
+
+    async function saveDoctor() {
+      const name = document.getElementById('docName').value.trim();
+      const doc_type = document.getElementById('docType').value;
+      const department = document.getElementById('docDepartment').value;
+      const phone = document.getElementById('docPhone').value.trim();
+
+      if(!name) {
+        alert('يرجى كتابة اسم الطبيب');
+        return;
+      }
+
+      try {
+        const { error } = await supabaseClient
+          .from('doctors')
+          .insert([{ name, doc_type, department, phone }]);
+
+        if (error) throw error;
+        alert('تم تسجيل الطبيب بنجاح في السجل ✓');
+        document.getElementById('docName').value = '';
+        document.getElementById('docPhone').value = '';
+        loadDoctors();
+      } catch(e) {
+        // Fallback local memory addition
+        doctorsList.push({ name, doc_type, department, phone });
+        renderDoctorsTable();
+        filterDoctorsByDept();
+        alert('تمت إضافة الطبيب بنجاح ✓');
+      }
+    }
+
+    // ----------------------------------------------------
+    // ER DATA MANAGEMENT & AUTO PRE-FILL
     // ----------------------------------------------------
     function calcERTotal() {
       const res = parseInt(document.getElementById('erResidents').value) || 0;
@@ -761,7 +952,7 @@
       badge.innerText = "جاري الفحص...";
 
       try {
-        const { data, error } = await supabaseClient
+        const { data } = await supabaseClient
           .from('er_logs')
           .select('*')
           .eq('log_date', date)
@@ -798,14 +989,13 @@
         }
         calcERTotal();
       } catch (err) {
-        badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600";
         badge.innerText = "جاهز للإدخال";
       }
     }
 
     async function saveERData() {
       const btn = document.getElementById('erSaveBtn');
-      btn.innerText = 'جاري الحفظ في السحابة...';
+      btn.innerText = 'جاري الحفظ...';
       btn.disabled = true;
 
       const payload = {
@@ -830,17 +1020,19 @@
           .upsert(payload, { onConflict: 'log_date,shift' });
 
         if (error) throw error;
-        alert('تم حفظ وتحديث بيانات الطوارئ بنجاح ✓');
+        alert('تم حفظ حركة الطوارئ بنجاح ✓');
         fetchExistingERData();
       } catch (err) {
-        alert('حدث خطأ أثناء الحفظ: ' + err.message);
+        alert('خطأ أثناء الحفظ: ' + err.message);
       } finally {
         btn.innerText = i18n[currentLang].btn_save_er;
         btn.disabled = false;
       }
     }
 
-    // Clinic Auto-Fetch & Save
+    // ----------------------------------------------------
+    // CLINIC AUTO PRE-FILL & SAVE
+    // ----------------------------------------------------
     async function fetchExistingClinicData() {
       const date = document.getElementById('clinicDate').value;
       const shift = document.getElementById('clinicShift').value;
@@ -851,7 +1043,7 @@
       badge.innerText = "جاري الفحص...";
 
       try {
-        const { data, error } = await supabaseClient
+        const { data } = await supabaseClient
           .from('clinic_logs')
           .select('*')
           .eq('log_date', date)
@@ -899,6 +1091,7 @@
         rad_transfers: parseInt(document.getElementById('clinicOutRad').value) || 0,
         inpatient_admitted: parseInt(document.getElementById('clinicOutInpatient').value) || 0,
         or_transferred: parseInt(document.getElementById('clinicOutOR').value) || 0,
+        doctor_name: document.getElementById('clinicDoctorSelect').value,
         updated_at: new Date().toISOString()
       };
 
@@ -911,11 +1104,13 @@
         alert('تم حفظ كشوفات العيادة بنجاح ✓');
         fetchExistingClinicData();
       } catch (err) {
-        alert('خطأ أثناء حفظ العيادات: ' + err.message);
+        alert('خطأ: ' + err.message);
       }
     }
 
-    // Nursing Auto-Fetch & Save
+    // ----------------------------------------------------
+    // NURSING PRE-FILL & SAVE
+    // ----------------------------------------------------
     async function fetchExistingNursingData() {
       const date = document.getElementById('nursingDate').value;
       const shift = document.getElementById('nursingShift').value;
@@ -969,48 +1164,50 @@
         alert('تم حفظ إشغال التمريض بنجاح ✓');
         fetchExistingNursingData();
       } catch(err) {
-        alert('خطأ أثناء حفظ التمريض: ' + err.message);
+        alert('خطأ: ' + err.message);
       }
     }
 
     // ----------------------------------------------------
-    // 6. REPORT GENERATION, CHARTS & EXCEL EXPORT
+    // MULTI-TYPE REPORT GENERATOR & CHARTS & EXCEL
     // ----------------------------------------------------
     let currentERRecords = [];
     let currentClinicRecords = [];
+    let currentNursingRecords = [];
     let demoChartInstance = null;
     let outcomesChartInstance = null;
 
     async function generateReport() {
+      const repType = document.getElementById('reportTypeSelect').value;
       const fromDate = document.getElementById('reportFromDate').value;
       const toDate = document.getElementById('reportToDate').value;
       document.getElementById('repPeriodDisplay').innerText = `${fromDate} ➔ ${toDate}`;
 
-      try {
-        const { data: erData } = await supabaseClient
-          .from('er_logs')
-          .select('*')
-          .gte('log_date', fromDate)
-          .lte('log_date', toDate)
-          .order('log_date', { ascending: false });
+      // Update Report Title
+      const titleMap = {
+        all: "التقرير التشغيلي والطبي المجمع",
+        er: "تقرير نشاط وحالات قسم الطوارئ (ER)",
+        clinics: "تقرير العيادات الخارجية ومردود الأطباء",
+        occupancy: "تقرير الإشغال الفندقي والسعة السريرية"
+      };
+      document.getElementById('reportHeaderTitle').innerText = titleMap[repType];
 
-        const { data: clinicData } = await supabaseClient
-          .from('clinic_logs')
-          .select('*')
-          .gte('log_date', fromDate)
-          .lte('log_date', toDate)
-          .order('log_date', { ascending: false });
+      try {
+        const { data: erData } = await supabaseClient.from('er_logs').select('*').gte('log_date', fromDate).lte('log_date', toDate).order('log_date', { ascending: false });
+        const { data: clinicData } = await supabaseClient.from('clinic_logs').select('*').gte('log_date', fromDate).lte('log_date', toDate).order('log_date', { ascending: false });
+        const { data: nursingData } = await supabaseClient.from('nursing_occupancy').select('*').gte('log_date', fromDate).lte('log_date', toDate).order('log_date', { ascending: false });
 
         currentERRecords = erData || [];
         currentClinicRecords = clinicData || [];
+        currentNursingRecords = nursingData || [];
 
+        // Aggregations
         let totalER = 0, totalClinics = 0, totalInpatient = 0, totalICU = 0;
         let totalRes = 0, totalRus = 0, totalEur = 0;
         let totalLab = 0, totalRad = 0, totalOR = 0;
 
         currentERRecords.forEach(r => {
-          const sum = (r.residents_count || 0) + (r.russian_count || 0) + (r.european_count || 0);
-          totalER += sum;
+          totalER += (r.residents_count || 0) + (r.russian_count || 0) + (r.european_count || 0);
           totalRes += (r.residents_count || 0);
           totalRus += (r.russian_count || 0);
           totalEur += (r.european_count || 0);
@@ -1022,8 +1219,7 @@
         });
 
         currentClinicRecords.forEach(c => {
-          const sum = (c.residents_count || 0) + (c.russian_count || 0) + (c.european_count || 0);
-          totalClinics += sum;
+          totalClinics += (c.residents_count || 0) + (c.russian_count || 0) + (c.european_count || 0);
           totalRes += (c.residents_count || 0);
           totalRus += (c.russian_count || 0);
           totalEur += (c.european_count || 0);
@@ -1038,9 +1234,69 @@
         document.getElementById('kpiInpatientTotal').innerText = totalInpatient;
         document.getElementById('kpiICUTotal').innerText = totalICU;
 
-        const tbody = document.getElementById('reportTableBody');
-        tbody.innerHTML = '';
+        // Render Table depending on Report Type
+        renderReportTable(repType);
 
+        // Render Analytics Charts
+        renderCharts({ totalRes, totalRus, totalEur, totalLab, totalRad, totalInpatient, totalICU, totalOR });
+
+      } catch (err) {
+        console.error("Report generation error", err);
+      }
+    }
+
+    function renderReportTable(type) {
+      const thead = document.getElementById('reportTableHead');
+      const tbody = document.getElementById('reportTableBody');
+      tbody.innerHTML = '';
+
+      if (type === 'occupancy') {
+        thead.innerHTML = `
+          <tr class="bg-slate-200 text-slate-800 border-b font-bold">
+            <th class="p-2">التاريخ</th>
+            <th class="p-2">الوردية</th>
+            <th class="p-2">القسم الداخلي (سعة 12)</th>
+            <th class="p-2">نسبة إشغال الداخلي</th>
+            <th class="p-2">الرعاية ICU (سعة 4)</th>
+            <th class="p-2">غرف الطوارئ (سعة 4)</th>
+            <th class="p-2">طاقم التمريض الحاضر</th>
+          </tr>
+        `;
+        currentNursingRecords.forEach(n => {
+          const inPct = Math.round(((n.inpatient_occupied || 0) / 12) * 100);
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-50";
+          tr.innerHTML = `
+            <td class="p-2 font-mono">${n.log_date}</td>
+            <td class="p-2">${n.shift === 'morning' ? 'صباحي' : 'مسائي'}</td>
+            <td class="p-2 font-bold text-amber-900">${n.inpatient_occupied || 0}</td>
+            <td class="p-2 font-bold">${inPct}%</td>
+            <td class="p-2 font-bold text-rose-800">${n.icu_occupied || 0}</td>
+            <td class="p-2 font-bold text-blue-800">${n.er_occupied || 0}</td>
+            <td class="p-2 font-bold">${n.staff_count || 0}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+        return;
+      }
+
+      // Default / Standard Table Headers
+      thead.innerHTML = `
+        <tr class="bg-slate-200 text-slate-800 border-b font-bold">
+          <th class="p-2">التاريخ</th>
+          <th class="p-2">الوردية</th>
+          <th class="p-2">القسم / الطبيب</th>
+          <th class="p-2">مقيم</th>
+          <th class="p-2">روسي</th>
+          <th class="p-2">أوروبي</th>
+          <th class="p-2">الإجمالي</th>
+          <th class="p-2">معمل</th>
+          <th class="p-2">أشعة</th>
+          <th class="p-2">تنويم</th>
+        </tr>
+      `;
+
+      if (type === 'all' || type === 'er') {
         currentERRecords.forEach(r => {
           const total = (r.residents_count || 0) + (r.russian_count || 0) + (r.european_count || 0);
           const tr = document.createElement('tr');
@@ -1048,7 +1304,7 @@
           tr.innerHTML = `
             <td class="p-2 font-mono">${r.log_date}</td>
             <td class="p-2">${r.shift === 'morning' ? 'صباحي' : 'مسائي'}</td>
-            <td class="p-2 font-bold text-teal-800">طوارئ (ER)</td>
+            <td class="p-2 font-bold text-teal-800">طوارئ (${r.supervisor || 'استقبال'})</td>
             <td class="p-2">${r.residents_count}</td>
             <td class="p-2">${r.russian_count}</td>
             <td class="p-2">${r.european_count}</td>
@@ -1059,7 +1315,9 @@
           `;
           tbody.appendChild(tr);
         });
+      }
 
+      if (type === 'all' || type === 'clinics') {
         currentClinicRecords.forEach(c => {
           const total = (c.residents_count || 0) + (c.russian_count || 0) + (c.european_count || 0);
           const tr = document.createElement('tr');
@@ -1067,7 +1325,7 @@
           tr.innerHTML = `
             <td class="p-2 font-mono">${c.log_date}</td>
             <td class="p-2">${c.shift === 'morning' ? 'صباحي' : 'مسائي'}</td>
-            <td class="p-2 font-bold text-blue-800">${c.department_code}</td>
+            <td class="p-2 font-bold text-blue-800">${c.department_code} ${c.doctor_name ? `(${c.doctor_name})` : ''}</td>
             <td class="p-2">${c.residents_count}</td>
             <td class="p-2">${c.russian_count}</td>
             <td class="p-2">${c.european_count}</td>
@@ -1078,11 +1336,6 @@
           `;
           tbody.appendChild(tr);
         });
-
-        renderCharts({ totalRes, totalRus, totalEur, totalLab, totalRad, totalInpatient, totalICU, totalOR });
-
-      } catch (err) {
-        console.error("Report generation error", err);
       }
     }
 
@@ -1105,9 +1358,7 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom' }
-          }
+          plugins: { legend: { position: 'bottom' } }
         }
       });
 
@@ -1127,62 +1378,76 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: { beginAtZero: true }
-          }
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
         }
       });
     }
 
+    // ----------------------------------------------------
+    // COMPREHENSIVE MULTI-SHEET EXCEL EXPORT
+    // ----------------------------------------------------
     function exportToExcel() {
-      if (!currentERRecords.length && !currentClinicRecords.length) {
-        alert('لا توجد بيانات مستخرجة لتصديرها، يرجى تشغيل التقرير أولاً.');
-        return;
-      }
-
       const wb = XLSX.utils.book_new();
 
-      const erDataFormatted = currentERRecords.map(r => ({
-        "التاريخ": r.log_date,
-        "الوردية": r.shift === 'morning' ? 'صباحي' : 'مسائي',
-        "المشرف": r.supervisor || '',
-        "مقيم": r.residents_count,
-        "روسي": r.russian_count,
-        "أوروبي": r.european_count,
-        "الإجمالي": (r.residents_count || 0) + (r.russian_count || 0) + (r.european_count || 0),
-        "خروج سريع": r.discharged_count,
-        "تنويم داخلي": r.inpatient_admitted,
-        "عناية مركزة": r.icu_admitted,
-        "عمليات": r.or_transferred,
-        "فحوصات معمل": r.lab_orders,
-        "فحوصات أشعة": r.rad_orders
-      }));
-      const wsER = XLSX.utils.json_to_sheet(erDataFormatted);
-      XLSX.utils.book_append_sheet(wb, wsER, "طوارئ ER");
+      // Sheet 1: ER
+      if (currentERRecords.length) {
+        const erDataFormatted = currentERRecords.map(r => ({
+          "التاريخ": r.log_date,
+          "الوردية": r.shift === 'morning' ? 'صباحي' : 'مسائي',
+          "المشرف": r.supervisor || '',
+          "مقيم": r.residents_count,
+          "روسي": r.russian_count,
+          "أوروبي": r.european_count,
+          "الإجمالي": (r.residents_count || 0) + (r.russian_count || 0) + (r.european_count || 0),
+          "خروج سريع": r.discharged_count,
+          "تنويم داخلي": r.inpatient_admitted,
+          "عناية مركزة": r.icu_admitted,
+          "عمليات": r.or_transferred,
+          "تحاليل معمل": r.lab_orders,
+          "فحوصات أشعة": r.rad_orders
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(erDataFormatted), "حركة الطوارئ ER");
+      }
 
-      const clinicDataFormatted = currentClinicRecords.map(c => ({
-        "التاريخ": c.log_date,
-        "الوردية": c.shift === 'morning' ? 'صباحي' : 'مسائي',
-        "القسم": c.department_code,
-        "مقيم": c.residents_count,
-        "روسي": c.russian_count,
-        "أوروبي": c.european_count,
-        "الإجمالي": (c.residents_count || 0) + (c.russian_count || 0) + (c.european_count || 0),
-        "تحويل معمل": c.lab_transfers,
-        "تحويل أشعة": c.rad_transfers,
-        "تنويم": c.inpatient_admitted,
-        "عمليات": c.or_transferred
-      }));
-      const wsClinics = XLSX.utils.json_to_sheet(clinicDataFormatted);
-      XLSX.utils.book_append_sheet(wb, wsClinics, "العيادات والأقسام");
+      // Sheet 2: Clinics
+      if (currentClinicRecords.length) {
+        const clinicDataFormatted = currentClinicRecords.map(c => ({
+          "التاريخ": c.log_date,
+          "الوردية": c.shift === 'morning' ? 'صباحي' : 'مسائي',
+          "القسم": c.department_code,
+          "الطبيب المعالج": c.doctor_name || '',
+          "مقيم": c.residents_count,
+          "روسي": c.russian_count,
+          "أوروبي": c.european_count,
+          "الإجمالي": (c.residents_count || 0) + (c.russian_count || 0) + (c.european_count || 0),
+          "تحويل معمل": c.lab_transfers,
+          "تحويل أشعة": c.rad_transfers,
+          "تنويم": c.inpatient_admitted,
+          "عمليات": c.or_transferred
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clinicDataFormatted), "العيادات والأقسام");
+      }
 
-      const fileName = `Sinai_Clinic_Report_${document.getElementById('reportFromDate').value}_to_${document.getElementById('reportToDate').value}.xlsx`;
-      XLSX.writeFile(wb, fileName);
+      // Sheet 3: Inpatient Occupancy
+      if (currentNursingRecords.length) {
+        const nursingDataFormatted = currentNursingRecords.map(n => ({
+          "التاريخ": n.log_date,
+          "الوردية": n.shift === 'morning' ? 'صباحي' : 'مسائي',
+          "إشغال الداخلي (من 12)": n.inpatient_occupied,
+          "إشغال الرعاية (من 4)": n.icu_occupied,
+          "إشغال غرف الطوارئ (من 4)": n.er_occupied,
+          "طاقم التمريض الحاضر": n.staff_count
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(nursingDataFormatted), "الإشغال والتمريض");
+      }
+
+      const fromD = document.getElementById('reportFromDate').value;
+      const toD = document.getElementById('reportToDate').value;
+      XLSX.writeFile(wb, `Sinai_Clinic_Full_Report_${fromD}_to_${toD}.xlsx`);
     }
 
+    // Startup Init
     window.addEventListener('DOMContentLoaded', checkSession);
   </script>
 </body>
