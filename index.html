@@ -343,7 +343,6 @@
 
     <!-- TAB 4: REPORTS, ANALYTICS & EXCEL -->
     <div id="view-reports" class="tab-view hidden space-y-6">
-      <!-- Search & Filters -->
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 no-print">
         <h2 class="text-xl font-bold text-teal-900 mb-3" data-key="rep_filter_title">لوحة استخراج التقارير والتحليل</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -371,9 +370,7 @@
         </div>
       </div>
 
-      <!-- Printable Report Body -->
       <div id="reportContainer" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 print-page space-y-6">
-        <!-- Hospital Official Header -->
         <div class="flex justify-between items-start border-b-2 border-teal-800 pb-4">
           <div>
             <h2 class="text-2xl font-black text-teal-950" data-key="hosp_rep_name">مستشفى سيناء كلينك</h2>
@@ -387,7 +384,6 @@
           </div>
         </div>
 
-        <!-- Aggregate KPI Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="bg-teal-50 p-4 rounded-xl border border-teal-200 text-center">
             <div class="text-xs font-bold text-teal-900" data-key="kpi_er_total">إجمالي طوارئ (ER)</div>
@@ -407,7 +403,6 @@
           </div>
         </div>
 
-        <!-- Visual Analytics Charts (On screen & In report) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           <div class="border rounded-xl p-4 bg-slate-50">
             <h4 class="text-xs font-bold text-slate-700 mb-2 text-center" data-key="chart_pie_title">توزيع الفئات والجنسيات (طوارئ + عيادات)</h4>
@@ -423,7 +418,6 @@
           </div>
         </div>
 
-        <!-- Detailed Table of Records -->
         <div class="overflow-x-auto">
           <h4 class="text-sm font-bold text-slate-800 mb-2" data-key="table_recent_header">سجل الحركات التفصيلي للفترة المختارة</h4>
           <table class="w-full text-xs text-center border-collapse">
@@ -442,12 +436,10 @@
               </tr>
             </thead>
             <tbody id="reportTableBody" class="divide-y divide-slate-200 text-slate-700 font-medium">
-              <!-- Dynamically populated rows -->
             </tbody>
           </table>
         </div>
 
-        <!-- Report Sign-off Footer -->
         <div class="pt-8 border-t border-slate-200 grid grid-cols-3 text-center text-xs font-bold text-slate-700">
           <div>
             <p>مشرف الطوارئ والعيادات</p>
@@ -469,12 +461,11 @@
 
   <script>
     // ----------------------------------------------------
-    // 1. SUPABASE CLIENT INITIALIZATION
+    // 1. SUPABASE CLIENT INITIALIZATION WITH YOUR EXACT KEYS
     // ----------------------------------------------------
-    const SUPABASE_URL = 'https://urquujkncftrnzrpgzrz.supabase.co';
+    const SUPABASE_URL = 'https://urquujkncftrnzrpgrz.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVycXV1amtuY2Z0cm56cnBnenJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNTc1MTksImV4cCI6MjEwNTczMzUxOX0.EPe_uqUHz8ZaV9bCzCspxUaBqjX_PbiPg_-tssoNjYY';
     
-    // Fallback safe init
     let supabaseClient = null;
     try {
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -638,14 +629,12 @@
       } else {
         document.body.classList.remove('ltr-mode');
       }
-      // Update DOM Text
       document.querySelectorAll('[data-key]').forEach(el => {
         const key = el.getAttribute('data-key');
         if(i18n[currentLang][key]) {
           el.innerText = i18n[currentLang][key];
         }
       });
-      // Re-render charts with bilingual text if reports visible
       if(!document.getElementById('view-reports').classList.contains('hidden')) {
         renderCharts();
       }
@@ -691,7 +680,6 @@
       document.getElementById('userEmailDisplay').innerText = email;
       document.getElementById('userRoleDisplay').innerText = 'Executive Director';
 
-      // Load initial state
       fetchExistingERData();
     }
 
@@ -795,7 +783,6 @@
           badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-emerald-100 text-emerald-800";
           badge.innerText = "تم استرجاع السجل السابق ✓";
         } else {
-          // Reset fields for new entry
           document.getElementById('erResidents').value = 0;
           document.getElementById('erRussian').value = 0;
           document.getElementById('erEuropean').value = 0;
@@ -811,7 +798,6 @@
         }
         calcERTotal();
       } catch (err) {
-        console.error("Auto fetch error", err);
         badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600";
         badge.innerText = "جاهز للإدخال";
       }
@@ -1001,7 +987,6 @@
       document.getElementById('repPeriodDisplay').innerText = `${fromDate} ➔ ${toDate}`;
 
       try {
-        // Query ER
         const { data: erData } = await supabaseClient
           .from('er_logs')
           .select('*')
@@ -1009,7 +994,6 @@
           .lte('log_date', toDate)
           .order('log_date', { ascending: false });
 
-        // Query Clinics
         const { data: clinicData } = await supabaseClient
           .from('clinic_logs')
           .select('*')
@@ -1020,7 +1004,6 @@
         currentERRecords = erData || [];
         currentClinicRecords = clinicData || [];
 
-        // Aggregations
         let totalER = 0, totalClinics = 0, totalInpatient = 0, totalICU = 0;
         let totalRes = 0, totalRus = 0, totalEur = 0;
         let totalLab = 0, totalRad = 0, totalOR = 0;
@@ -1050,13 +1033,11 @@
           totalRad += (c.rad_transfers || 0);
         });
 
-        // Set KPIs
         document.getElementById('kpiERTotal').innerText = totalER;
         document.getElementById('kpiClinicsTotal').innerText = totalClinics;
         document.getElementById('kpiInpatientTotal').innerText = totalInpatient;
         document.getElementById('kpiICUTotal').innerText = totalICU;
 
-        // Populate Table Rows
         const tbody = document.getElementById('reportTableBody');
         tbody.innerHTML = '';
 
@@ -1108,7 +1089,6 @@
     function renderCharts(metrics) {
       if(!metrics) return;
 
-      // 1. Demographics Pie Chart
       const ctxPie = document.getElementById('demographicsChart').getContext('2d');
       if (demoChartInstance) demoChartInstance.destroy();
 
@@ -1131,7 +1111,6 @@
         }
       });
 
-      // 2. Outcomes Bar Chart
       const ctxBar = document.getElementById('outcomesChart').getContext('2d');
       if (outcomesChartInstance) outcomesChartInstance.destroy();
 
@@ -1158,7 +1137,6 @@
       });
     }
 
-    // Export to Excel using SheetJS
     function exportToExcel() {
       if (!currentERRecords.length && !currentClinicRecords.length) {
         alert('لا توجد بيانات مستخرجة لتصديرها، يرجى تشغيل التقرير أولاً.');
@@ -1167,7 +1145,6 @@
 
       const wb = XLSX.utils.book_new();
 
-      // Sheet 1: ER Logs
       const erDataFormatted = currentERRecords.map(r => ({
         "التاريخ": r.log_date,
         "الوردية": r.shift === 'morning' ? 'صباحي' : 'مسائي',
@@ -1186,7 +1163,6 @@
       const wsER = XLSX.utils.json_to_sheet(erDataFormatted);
       XLSX.utils.book_append_sheet(wb, wsER, "طوارئ ER");
 
-      // Sheet 2: Clinic Logs
       const clinicDataFormatted = currentClinicRecords.map(c => ({
         "التاريخ": c.log_date,
         "الوردية": c.shift === 'morning' ? 'صباحي' : 'مسائي',
@@ -1203,12 +1179,10 @@
       const wsClinics = XLSX.utils.json_to_sheet(clinicDataFormatted);
       XLSX.utils.book_append_sheet(wb, wsClinics, "العيادات والأقسام");
 
-      // Save file
       const fileName = `Sinai_Clinic_Report_${document.getElementById('reportFromDate').value}_to_${document.getElementById('reportToDate').value}.xlsx`;
       XLSX.writeFile(wb, fileName);
     }
 
-    // Startup Init
     window.addEventListener('DOMContentLoaded', checkSession);
   </script>
 </body>
