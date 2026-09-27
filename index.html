@@ -33,8 +33,8 @@
       <div class="flex items-center space-x-3 space-x-reverse">
         <div class="bg-white p-1 rounded-full w-10 h-10 flex items-center justify-center text-teal-800 font-extrabold text-xl shadow">🏥</div>
         <div>
-          <h1 class="text-lg md:text-xl font-bold leading-tight" data-key="hospital_title">مستشفى سيناء كلينك - شرم الشيخ</h1>
-          <p class="text-xs text-teal-200" data-key="system_subtitle">منظومة الإدارة والمتابعة والتقارير الطبية التنفيذية</p>
+          <h1 class="text-lg md:text-xl font-bold leading-tight">مستشفى سيناء كلينك - شرم الشيخ</h1>
+          <p class="text-xs text-teal-200">منظومة الإدارة والمتابعة والتقارير الطبية التنفيذية</p>
         </div>
       </div>
       
@@ -47,7 +47,7 @@
           <span class="mx-1.5 opacity-50">|</span>
           <span id="userRoleDisplay" class="font-bold text-amber-300"></span>
         </div>
-        <button id="logoutBtn" onclick="handleLogout()" class="hidden bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition" data-key="logout_btn">
+        <button id="logoutBtn" onclick="handleLogout()" class="hidden bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition">
           تسجيل خروج
         </button>
       </div>
@@ -56,11 +56,11 @@
     <!-- Navigation Tabs -->
     <nav id="mainNav" class="bg-teal-800 border-t border-teal-700/60 hidden">
       <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto space-x-1 space-x-reverse text-sm">
-        <button onclick="switchTab('er')" id="tab-er" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-amber-400 text-amber-300 whitespace-nowrap" data-key="nav_er">🚨 الطوارئ (ER)</button>
-        <button onclick="switchTab('clinics')" id="tab-clinics" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_clinics">🩺 العيادات الخارجية</button>
-        <button onclick="switchTab('doctors')" id="tab-doctors" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_doctors">👨‍⚕️ إدارة الأطباء وحالاتهم</button>
-        <button onclick="switchTab('nursing')" id="tab-nursing" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_nursing">🛏️ التمريض والإشغال</button>
-        <button onclick="switchTab('reports')" id="tab-reports" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_reports">📑 التقارير وExcel</button>
+        <button onclick="switchTab('er')" id="tab-er" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-amber-400 text-amber-300 whitespace-nowrap">🚨 الطوارئ (ER)</button>
+        <button onclick="switchTab('clinics')" id="tab-clinics" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap">🩺 العيادات الخارجية</button>
+        <button onclick="switchTab('doctors')" id="tab-doctors" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap">👨‍⚕️ إدارة الأطباء والتخصصات</button>
+        <button onclick="switchTab('nursing')" id="tab-nursing" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap">🛏️ التمريض والإشغال</button>
+        <button onclick="switchTab('reports')" id="tab-reports" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap">📑 التقارير وExcel</button>
       </div>
     </nav>
   </header>
@@ -70,19 +70,19 @@
     <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
       <div class="text-center mb-6">
         <div class="inline-block bg-teal-100 text-teal-800 p-3 rounded-2xl mb-3 text-2xl shadow-inner">🏥</div>
-        <h2 class="text-2xl font-bold text-slate-800" data-key="login_welcome">تسجيل الدخول للمنظومة</h2>
-        <p class="text-xs text-slate-500 mt-1" data-key="login_note">يرجى تسجيل الدخول بحساب المستخدم المعتمد لمستشفى سيناء كلينك</p>
+        <h2 class="text-2xl font-bold text-slate-800">تسجيل الدخول للمنظومة</h2>
+        <p class="text-xs text-slate-500 mt-1">يرجى تسجيل الدخول بحساب المستخدم المعتمد لمستشفى سيناء كلينك</p>
       </div>
       <form onsubmit="handleLogin(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1" data-key="login_email">البريد الإلكتروني</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">البريد الإلكتروني</label>
           <input type="email" id="loginEmail" value="aymanelsherif9@gmail.com" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-teal-600">
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1" data-key="login_pass">كلمة المرور</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">كلمة المرور</label>
           <input type="password" id="loginPass" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-teal-600" placeholder="••••••••">
         </div>
-        <button type="submit" id="loginSubmitBtn" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-2.5 rounded-lg shadow text-sm transition" data-key="login_submit">
+        <button type="submit" id="loginSubmitBtn" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-2.5 rounded-lg shadow text-sm transition">
           دخول المنظومة
         </button>
       </form>
@@ -104,8 +104,8 @@
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex flex-wrap justify-between items-center gap-4 mb-4 pb-3 border-b">
           <div>
-            <h2 class="text-xl font-bold text-teal-900" data-key="er_title">قسم الطوارئ والاستقبال (ER)</h2>
-            <p class="text-xs text-slate-500" data-key="er_desc">السعة التشغيلية: 4 غرف (2 علاج فوري + 2 ملاحظة طبية)</p>
+            <h2 class="text-xl font-bold text-teal-900">قسم الطوارئ والاستقبال (ER)</h2>
+            <p class="text-xs text-slate-500">السعة التشغيلية: 4 غرف (2 علاج فوري + 2 ملاحظة طبية)</p>
           </div>
           <div class="flex items-center gap-2">
             <span id="erStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600">جاهز للإدخال</span>
@@ -115,23 +115,23 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_date">تاريخ الحركة</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ الحركة</label>
             <input type="date" id="erDate" onchange="fetchExistingERData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-medium">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_shift">الوردية (12 ساعة)</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">الوردية (12 ساعة)</label>
             <select id="erShift" onchange="fetchExistingERData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-medium">
               <option value="morning">الوردية الصباحية (Morning: 8:00 AM - 8:00 PM)</option>
               <option value="evening">الوردية المسائية (Evening: 8:00 PM - 8:00 AM)</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_supervisor">مشرف الوردية</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">مشرف الوردية</label>
             <input type="text" id="erSupervisor" placeholder="طبيب / مشرف الطوارئ" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
           </div>
         </div>
 
-        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5" data-key="header_patients">
+        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
           <span>👥</span> توزيع الحالات حسب الفئات
         </h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -198,9 +198,12 @@
         <div class="flex flex-wrap justify-between items-center gap-4 mb-4 pb-3 border-b">
           <div>
             <h2 class="text-xl font-bold text-teal-900">كشوفات العيادات والأقسام التخصصية</h2>
-            <p class="text-xs text-slate-500">تشمل الأسنان، العلاج الطبيعي، السونار، الأشعة، والمعمل مع ربط الطبيب</p>
+            <p class="text-xs text-slate-500">تسجيل وتعديل بيانات المرضى حسب القسم والطبيب المعالج</p>
           </div>
           <div class="flex items-center gap-2">
+            <button onclick="openDepartmentModal()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-bold shadow flex items-center gap-1">
+              <span>➕</span> إضافة عيادة / قسم جديد
+            </button>
             <span id="clinicStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600">جاهز للإدخال</span>
             <button onclick="resetClinicForm()" class="text-xs bg-slate-200 hover:bg-slate-300 px-2.5 py-1 rounded-lg font-bold text-slate-700">تفريغ الحقول</button>
           </div>
@@ -221,15 +224,7 @@
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">القسم / التخصص</label>
             <select id="clinicDeptSelect" onchange="filterDoctorsByDept(); fetchExistingClinicData();" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-semibold">
-              <option value="internal_medicine">عيادة الباطنة والقلب</option>
-              <option value="general_surgery">عيادة الجراحة العامة</option>
-              <option value="orthopedics">عيادة جراحة العظام والمفاصل</option>
-              <option value="pediatrics">عيادة الأطفال وحديثي الولادة</option>
-              <option value="dental">عيادة طب وجراحة الأسنان</option>
-              <option value="physiotherapy">مركز العلاج الطبيعي والتأهيل</option>
-              <option value="radiology">قسم الأشعة والتصوير الطبي</option>
-              <option value="sonar">قسم الموجات الصوتية والسونار</option>
-              <option value="laboratory">المختبر والتحاليل الطبية</option>
+              <!-- Dynamically populated from departmentsList -->
             </select>
           </div>
           <div>
@@ -281,15 +276,20 @@
       </div>
     </div>
 
-    <!-- TAB 3: DOCTORS DIRECTORY (WITH EDIT & STATUS TOGGLE) -->
+    <!-- TAB 3: DOCTORS DIRECTORY (WITH EDIT & STATUS TOGGLE & DYNAMIC DEPARTMENTS) -->
     <div id="view-doctors" class="tab-view hidden space-y-6">
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <div class="flex justify-between items-center mb-4 pb-3 border-b">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4 pb-3 border-b">
           <div>
-            <h2 class="text-xl font-bold text-teal-900">سجل الأطباء وحالة العمل</h2>
-            <p class="text-xs text-slate-500">إضافة وتعديل بيانات الأطباء والتحكم في تفعيل أو إيقاف الطبيب أثناء الإجازات</p>
+            <h2 class="text-xl font-bold text-teal-900">سجل الأطباء والأقسام التخصصية</h2>
+            <p class="text-xs text-slate-500">إضافة وتعديل بيانات الأطباء وربطهم بالأقسام الحالية أو إضافة تخصصات جديدة</p>
           </div>
-          <button onclick="cancelDoctorEdit()" id="docCancelEditBtn" class="hidden text-xs bg-rose-100 text-rose-800 px-3 py-1 rounded-lg font-bold">إلغاء التعديل</button>
+          <div class="flex items-center gap-2">
+            <button onclick="openDepartmentModal()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-bold shadow flex items-center gap-1">
+              <span>➕</span> إضافة تخصص / عيادة جديدة
+            </button>
+            <button onclick="cancelDoctorEdit()" id="docCancelEditBtn" class="hidden text-xs bg-rose-100 text-rose-800 px-3 py-1 rounded-lg font-bold">إلغاء التعديل</button>
+          </div>
         </div>
 
         <input type="hidden" id="editingDoctorId" value="">
@@ -307,18 +307,9 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">القسم الطبي</label>
-            <select id="docDepartment" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
-              <option value="internal_medicine">عيادة الباطنة والقلب</option>
-              <option value="general_surgery">عيادة الجراحة العامة</option>
-              <option value="orthopedics">عيادة جراحة العظام والمفاصل</option>
-              <option value="pediatrics">عيادة الأطفال وحديثي الولادة</option>
-              <option value="dental">عيادة طب وجراحة الأسنان</option>
-              <option value="physiotherapy">مركز العلاج الطبيعي والتأهيل</option>
-              <option value="radiology">قسم الأشعة والتصوير الطبي</option>
-              <option value="sonar">قسم الموجات الصوتية والسونار</option>
-              <option value="laboratory">المختبر والتحاليل الطبية</option>
-              <option value="er">قسم الطوارئ والاستقبال</option>
+            <label class="block text-xs font-bold text-slate-700 mb-1">القسم الطبي المعتمد</label>
+            <select id="docDepartment" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-semibold">
+              <!-- Dynamically populated -->
             </select>
           </div>
           <div>
@@ -332,7 +323,7 @@
         </button>
 
         <div class="mt-8 overflow-x-auto">
-          <h3 class="text-sm font-bold text-slate-800 mb-3">قائمة الأطباء وحالة التفعيل (إلغاء التفعيل يمنع ظهوره بالعيادات مع بقاء سجلاته)</h3>
+          <h3 class="text-sm font-bold text-slate-800 mb-3">قائمة الأطباء وحالة العمل (إلغاء التفعيل يمنع ظهوره بالعيادات مع بقاء سجلاته السابقة)</h3>
           <table class="w-full text-xs text-center border-collapse">
             <thead>
               <tr class="bg-slate-100 text-slate-700 border-b font-bold">
@@ -536,6 +527,39 @@
 
   </main>
 
+  <!-- MODAL: ADD DYNAMIC SPECIALTY / DEPARTMENT -->
+  <div id="deptModal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center pb-3 border-b mb-4">
+        <h3 class="text-lg font-bold text-teal-900">إضافة عيادة أو تخصص طبي جديد</h3>
+        <button onclick="closeDepartmentModal()" class="text-slate-400 hover:text-rose-600 text-xl font-bold">&times;</button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">اسم العيادة / التخصص (بالعربي)</label>
+          <input type="text" id="newDeptName" placeholder="مثال: عيادة المسالك البولية، عيادة الجلدية..." class="w-full px-3 py-2 border rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-600">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">نوع القسم</label>
+          <select id="newDeptType" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-medium">
+            <option value="clinic">عيادة خارجية (Clinic)</option>
+            <option value="radiology">أشعة وتصوير (Radiology)</option>
+            <option value="laboratory">مختبر وتحاليل (Laboratory)</option>
+            <option value="er">طوارئ واستقبال (ER)</option>
+          </select>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button onclick="submitNewDepartment()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-sm shadow transition">
+            حفظ التخصص واعتماده ✓
+          </button>
+          <button onclick="closeDepartmentModal()" class="px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-lg text-sm transition">
+            إلغاء
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ----------------------------------------------------
     // EXACT LIVE SUPABASE CREDENTIALS
@@ -548,6 +572,109 @@
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch(e) {
       console.error("Supabase Init Error", e);
+    }
+
+    // ----------------------------------------------------
+    // DYNAMIC DEPARTMENTS & SPECIALTIES
+    // ----------------------------------------------------
+    let departmentsList = [
+      { id: 'internal_medicine', name: 'عيادة الباطنة والقلب' },
+      { id: 'general_surgery', name: 'عيادة الجراحة العامة' },
+      { id: 'orthopedics', name: 'عيادة جراحة العظام والمفاصل' },
+      { id: 'pediatrics', name: 'عيادة الأطفال وحديثي الولادة' },
+      { id: 'dental', name: 'عيادة طب وجراحة الأسنان' },
+      { id: 'physiotherapy', name: 'مركز العلاج الطبيعي والتأهيل' },
+      { id: 'radiology', name: 'قسم الأشعة والتصوير الطبي' },
+      { id: 'sonar', name: 'قسم الموجات الصوتية والسونار' },
+      { id: 'laboratory', name: 'المختبر والتحاليل الطبية' }
+    ];
+
+    async function loadDepartments() {
+      try {
+        const { data } = await supabaseClient.from('departments').select('id, name').order('name');
+        if (data && data.length > 0) {
+          // Merge Supabase departments with defaults
+          data.forEach(d => {
+            if (!departmentsList.some(item => item.name === d.name)) {
+              departmentsList.push({ id: d.name, name: d.name });
+            }
+          });
+        }
+      } catch(e) {
+        console.warn("Using local departments fallback", e);
+      }
+      populateDepartmentDropdowns();
+    }
+
+    function populateDepartmentDropdowns() {
+      const clinicSelect = document.getElementById('clinicDeptSelect');
+      const docSelect = document.getElementById('docDepartment');
+      
+      const currentClinicVal = clinicSelect.value;
+      const currentDocVal = docSelect.value;
+
+      clinicSelect.innerHTML = '';
+      docSelect.innerHTML = '';
+
+      departmentsList.forEach(dept => {
+        const opt1 = document.createElement('option');
+        opt1.value = dept.id || dept.name;
+        opt1.innerText = dept.name;
+        clinicSelect.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = dept.id || dept.name;
+        opt2.innerText = dept.name;
+        docSelect.appendChild(opt2);
+      });
+
+      // Special addition for Doctor department dropdown
+      const erOpt = document.createElement('option');
+      erOpt.value = 'er';
+      erOpt.innerText = 'قسم الطوارئ والاستقبال (ER)';
+      docSelect.appendChild(erOpt);
+
+      if (currentClinicVal) clinicSelect.value = currentClinicVal;
+      if (currentDocVal) docSelect.value = currentDocVal;
+
+      filterDoctorsByDept();
+    }
+
+    function openDepartmentModal() {
+      document.getElementById('newDeptName').value = '';
+      document.getElementById('deptModal').classList.remove('hidden');
+    }
+
+    function closeDepartmentModal() {
+      document.getElementById('deptModal').classList.add('hidden');
+    }
+
+    async function submitNewDepartment() {
+      const name = document.getElementById('newDeptName').value.trim();
+      const type = document.getElementById('newDeptType').value;
+
+      if (!name) {
+        alert('يرجى إدخال اسم التخصص أو العيادة');
+        return;
+      }
+
+      if (departmentsList.some(d => d.name === name)) {
+        alert('هذا التخصص مسجل بالفعل في القائمة!');
+        return;
+      }
+
+      const newDept = { id: name, name: name, type: type, total_beds: 0 };
+      departmentsList.push(newDept);
+
+      try {
+        await supabaseClient.from('departments').insert([{ name, type, total_beds: 0 }]);
+      } catch(e) {
+        console.warn("Department saved locally", e);
+      }
+
+      populateDepartmentDropdowns();
+      closeDepartmentModal();
+      alert(`تم اعتماد (${name}) بنجاح وإضافتها للقوائم ✓`);
     }
 
     // ----------------------------------------------------
@@ -581,6 +708,8 @@
       document.getElementById('reportFromDate').value = todayStr;
       document.getElementById('reportToDate').value = todayStr;
       document.getElementById('repDateGenerated').innerText = new Date().toLocaleString();
+
+      await loadDepartments();
 
       if (!supabaseClient) {
         showApp();
@@ -680,7 +809,7 @@
     }
 
     // ----------------------------------------------------
-    // ADVANCED DOCTORS DIRECTORY (EDIT & DEACTIVATE)
+    // DOCTORS REGISTRY (EDIT & STATUS TOGGLE)
     // ----------------------------------------------------
     let doctorsList = [
       { id: '1', name: 'د. تامر التهامي', doc_type: 'staff', department: 'internal_medicine', phone: '0100000001', is_active: true },
@@ -734,8 +863,7 @@
       const selectEl = document.getElementById('clinicDoctorSelect');
       selectEl.innerHTML = '';
 
-      // Only display ACTIVE doctors in dropdowns
-      const activeDoctors = doctorsList.filter(d => d.department === selectedDept && d.is_active !== false);
+      const activeDoctors = doctorsList.filter(d => (d.department === selectedDept || d.department.includes(selectedDept)) && d.is_active !== false);
       if(activeDoctors.length === 0) {
         const opt = document.createElement('option');
         opt.value = "general";
@@ -804,7 +932,6 @@
       }
 
       if (id) {
-        // Update existing doctor
         const doc = doctorsList.find(d => String(d.id) === String(id));
         if (doc) {
           doc.name = name;
@@ -818,7 +945,6 @@
         alert('تم تحديث بيانات الطبيب بنجاح ✓');
         cancelDoctorEdit();
       } else {
-        // Insert new doctor
         const newDoc = { id: Date.now().toString(), name, doc_type, department, phone, is_active: true };
         doctorsList.push(newDoc);
         try {
