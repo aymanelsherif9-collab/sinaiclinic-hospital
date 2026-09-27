@@ -58,7 +58,7 @@
       <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto space-x-1 space-x-reverse text-sm">
         <button onclick="switchTab('er')" id="tab-er" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-amber-400 text-amber-300 whitespace-nowrap" data-key="nav_er">🚨 الطوارئ (ER)</button>
         <button onclick="switchTab('clinics')" id="tab-clinics" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_clinics">🩺 العيادات الخارجية</button>
-        <button onclick="switchTab('doctors')" id="tab-doctors" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_doctors">👨‍⚕️ الأطباء (داخلي/خارجي)</button>
+        <button onclick="switchTab('doctors')" id="tab-doctors" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_doctors">👨‍⚕️ إدارة الأطباء وحالاتهم</button>
         <button onclick="switchTab('nursing')" id="tab-nursing" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_nursing">🛏️ التمريض والإشغال</button>
         <button onclick="switchTab('reports')" id="tab-reports" class="tab-link py-2.5 px-4 font-semibold border-b-2 border-transparent text-teal-200 hover:text-white whitespace-nowrap" data-key="nav_reports">📑 التقارير وExcel</button>
       </div>
@@ -76,24 +76,22 @@
       <form onsubmit="handleLogin(event)" class="space-y-4">
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1" data-key="login_email">البريد الإلكتروني</label>
-          <input type="email" id="loginEmail" value="aymanelsherif9@gmail.com" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none">
+          <input type="email" id="loginEmail" value="aymanelsherif9@gmail.com" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-teal-600">
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1" data-key="login_pass">كلمة المرور</label>
-          <input type="password" id="loginPass" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none" placeholder="••••••••">
+          <input type="password" id="loginPass" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-teal-600" placeholder="••••••••">
         </div>
         <button type="submit" id="loginSubmitBtn" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-2.5 rounded-lg shadow text-sm transition" data-key="login_submit">
           دخول المنظومة
         </button>
       </form>
 
-      <!-- Direct Bypass Button for Seamless Management -->
       <div class="mt-4 pt-3 border-t text-center">
         <button onclick="bypassLogin()" class="text-xs text-teal-700 hover:text-teal-900 font-bold underline">
           ⚡ الدخول المباشر السريع كمدير تنفيذي (Bypass Mode)
         </button>
       </div>
-
       <div id="loginError" class="hidden mt-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 text-center font-semibold"></div>
     </div>
   </section>
@@ -109,8 +107,9 @@
             <h2 class="text-xl font-bold text-teal-900" data-key="er_title">قسم الطوارئ والاستقبال (ER)</h2>
             <p class="text-xs text-slate-500" data-key="er_desc">السعة التشغيلية: 4 غرف (2 علاج فوري + 2 ملاحظة طبية)</p>
           </div>
-          <div id="erStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600">
-            جاهز للإدخال
+          <div class="flex items-center gap-2">
+            <span id="erStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600">جاهز للإدخال</span>
+            <button onclick="resetERForm()" class="text-xs bg-slate-200 hover:bg-slate-300 px-2.5 py-1 rounded-lg font-bold text-slate-700">تفريغ الحقول</button>
           </div>
         </div>
 
@@ -122,8 +121,8 @@
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_shift">الوردية (12 ساعة)</label>
             <select id="erShift" onchange="fetchExistingERData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-medium">
-              <option value="morning" data-key="opt_morning">الوردية الصباحية (Morning: 8:00 AM - 8:00 PM)</option>
-              <option value="evening" data-key="opt_evening">الوردية المسائية (Evening: 8:00 PM - 8:00 AM)</option>
+              <option value="morning">الوردية الصباحية (Morning: 8:00 AM - 8:00 PM)</option>
+              <option value="evening">الوردية المسائية (Evening: 8:00 PM - 8:00 AM)</option>
             </select>
           </div>
           <div>
@@ -137,61 +136,57 @@
         </h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
-            <label class="block text-xs font-bold text-blue-900 mb-1" data-key="cat_residents">مصريون / مقيمون</label>
+            <label class="block text-xs font-bold text-blue-900 mb-1">مصريون / مقيمون</label>
             <input type="number" min="0" value="0" id="erResidents" oninput="calcERTotal()" class="w-full px-3 py-2 border rounded-lg text-lg font-bold text-blue-950 text-center bg-white">
           </div>
           <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
-            <label class="block text-xs font-bold text-indigo-900 mb-1" data-key="cat_russian">سياحة روسية (Russian)</label>
+            <label class="block text-xs font-bold text-indigo-900 mb-1">سياحة روسية (Russian)</label>
             <input type="number" min="0" value="0" id="erRussian" oninput="calcERTotal()" class="w-full px-3 py-2 border rounded-lg text-lg font-bold text-indigo-950 text-center bg-white">
           </div>
           <div class="bg-purple-50 p-4 rounded-xl border border-purple-200">
-            <label class="block text-xs font-bold text-purple-900 mb-1" data-key="cat_european">سياحة أوروبية ودولية (European / Other)</label>
+            <label class="block text-xs font-bold text-purple-900 mb-1">سياحة أوروبية ودولية (European)</label>
             <input type="number" min="0" value="0" id="erEuropean" oninput="calcERTotal()" class="w-full px-3 py-2 border rounded-lg text-lg font-bold text-purple-950 text-center bg-white">
           </div>
         </div>
 
         <div class="mb-6 p-3 bg-teal-50 border border-teal-200 rounded-xl flex justify-between items-center">
-          <span class="text-sm font-bold text-teal-950" data-key="lbl_er_total">إجمالي حالات الطوارئ بالوردية:</span>
+          <span class="text-sm font-bold text-teal-950">إجمالي حالات الطوارئ بالوردية:</span>
           <span id="erTotalCasesBadge" class="text-xl font-black text-teal-700">0</span>
         </div>
 
-        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5" data-key="header_disposition">
-          <span>🔄</span> مسارات التصريف والتحويلات
-        </h3>
+        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5"><span>🔄</span> مسارات التصريف والتحويلات</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="disp_discharge">خروج وملاحظة سريعة</label>
-            <input type="number" min="0" value="0" id="erDischarge" class="w-full px-3 py-1.5 border rounded-lg text-center font-bold text-slate-800 bg-white">
+          <div class="bg-slate-50 p-3 rounded-xl border">
+            <label class="block text-xs font-bold text-slate-700 mb-1">خروج وملاحظة سريعة</label>
+            <input type="number" min="0" value="0" id="erDischarge" class="w-full px-3 py-1.5 border rounded-lg text-center font-bold bg-white">
           </div>
           <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
-            <label class="block text-xs font-bold text-amber-900 mb-1" data-key="disp_inpatient">تنويم قسم داخلي (12 س)</label>
+            <label class="block text-xs font-bold text-amber-900 mb-1">تنويم قسم داخلي (12 س)</label>
             <input type="number" min="0" value="0" id="erInpatient" class="w-full px-3 py-1.5 border rounded-lg text-center font-bold text-amber-900 bg-white">
           </div>
           <div class="bg-rose-50 p-3 rounded-xl border border-rose-200">
-            <label class="block text-xs font-bold text-rose-900 mb-1" data-key="disp_icu">نقل عاجل لـ ICU (4 س)</label>
+            <label class="block text-xs font-bold text-rose-900 mb-1">نقل عاجل لـ ICU (4 س)</label>
             <input type="number" min="0" value="0" id="erICU" class="w-full px-3 py-1.5 border rounded-lg text-center font-bold text-rose-900 bg-white">
           </div>
           <div class="bg-red-50 p-3 rounded-xl border border-red-200">
-            <label class="block text-xs font-bold text-red-900 mb-1" data-key="disp_or">تحويل مباشر للعمليات (OR)</label>
+            <label class="block text-xs font-bold text-red-900 mb-1">تحويل عمليات (OR)</label>
             <input type="number" min="0" value="0" id="erOR" class="w-full px-3 py-1.5 border rounded-lg text-center font-bold text-red-900 bg-white">
           </div>
         </div>
 
-        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5" data-key="header_diagnostics">
-          <span>🧪</span> الفحوصات الطارئة المنفذة
-        </h3>
+        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5"><span>🧪</span> الفحوصات الطارئة المنفذة</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="diag_lab">فحوصات وتحاليل المختبر</label>
+          <div class="bg-slate-50 p-3 rounded-xl border">
+            <label class="block text-xs font-bold text-slate-700 mb-1">فحوصات وتحاليل المختبر</label>
             <input type="number" min="0" value="0" id="erLabOrders" class="w-full px-3 py-2 border rounded-lg text-center font-bold bg-white">
           </div>
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="diag_rad">فحوصات الأشعة والسونار</label>
+          <div class="bg-slate-50 p-3 rounded-xl border">
+            <label class="block text-xs font-bold text-slate-700 mb-1">فحوصات الأشعة والسونار</label>
             <input type="number" min="0" value="0" id="erRadOrders" class="w-full px-3 py-2 border rounded-lg text-center font-bold bg-white">
           </div>
         </div>
 
-        <button onclick="saveERData()" id="erSaveBtn" class="w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition" data-key="btn_save_er">
+        <button onclick="saveERData()" id="erSaveBtn" class="w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition">
           حفظ وتحديث حركة الطوارئ ✓
         </button>
       </div>
@@ -202,28 +197,29 @@
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex flex-wrap justify-between items-center gap-4 mb-4 pb-3 border-b">
           <div>
-            <h2 class="text-xl font-bold text-teal-900" data-key="clinics_title">كشوفات العيادات والأقسام التخصصية</h2>
-            <p class="text-xs text-slate-500" data-key="clinics_desc">تشمل الأقسام المستحدثة: الأسنان، العلاج الطبيعي، السونار، الأشعة، والمعمل</p>
+            <h2 class="text-xl font-bold text-teal-900">كشوفات العيادات والأقسام التخصصية</h2>
+            <p class="text-xs text-slate-500">تشمل الأسنان، العلاج الطبيعي، السونار، الأشعة، والمعمل مع ربط الطبيب</p>
           </div>
-          <div id="clinicStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600">
-            جاهز للإدخال
+          <div class="flex items-center gap-2">
+            <span id="clinicStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600">جاهز للإدخال</span>
+            <button onclick="resetClinicForm()" class="text-xs bg-slate-200 hover:bg-slate-300 px-2.5 py-1 rounded-lg font-bold text-slate-700">تفريغ الحقول</button>
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_date">التاريخ</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">التاريخ</label>
             <input type="date" id="clinicDate" onchange="fetchExistingClinicData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_shift">الوردية</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">الوردية</label>
             <select id="clinicShift" onchange="fetchExistingClinicData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
-              <option value="morning" data-key="opt_morning">الوردية الصباحية (Morning)</option>
-              <option value="evening" data-key="opt_evening">الوردية المسائية (Evening)</option>
+              <option value="morning">الوردية الصباحية (Morning)</option>
+              <option value="evening">الوردية المسائية (Evening)</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_department">القسم / التخصص</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">القسم / التخصص</label>
             <select id="clinicDeptSelect" onchange="filterDoctorsByDept(); fetchExistingClinicData();" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-semibold">
               <option value="internal_medicine">عيادة الباطنة والقلب</option>
               <option value="general_surgery">عيادة الجراحة العامة</option>
@@ -237,7 +233,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_doctor">الطبيب المعالج</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">الطبيب المعالج (النشط فقط)</label>
             <select id="clinicDoctorSelect" onchange="fetchExistingClinicData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-semibold">
               <option value="general">طبيب القسم العام</option>
             </select>
@@ -246,69 +242,72 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
-            <label class="block text-xs font-bold text-blue-900 mb-1" data-key="cat_residents">مصريون / مقيمون</label>
+            <label class="block text-xs font-bold text-blue-900 mb-1">مصريون / مقيمون</label>
             <input type="number" min="0" value="0" id="clinicResidents" class="w-full px-3 py-2 border rounded-lg text-center font-bold text-blue-950 bg-white">
           </div>
           <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
-            <label class="block text-xs font-bold text-indigo-900 mb-1" data-key="cat_russian">سياحة روسية (Russian)</label>
+            <label class="block text-xs font-bold text-indigo-900 mb-1">سياحة روسية (Russian)</label>
             <input type="number" min="0" value="0" id="clinicRussian" class="w-full px-3 py-2 border rounded-lg text-center font-bold text-indigo-950 bg-white">
           </div>
           <div class="bg-purple-50 p-4 rounded-xl border border-purple-200">
-            <label class="block text-xs font-bold text-purple-900 mb-1" data-key="cat_european">سياحة أوروبية ودولية (European)</label>
+            <label class="block text-xs font-bold text-purple-900 mb-1">سياحة أوروبية ودولية (European)</label>
             <input type="number" min="0" value="0" id="clinicEuropean" class="w-full px-3 py-2 border rounded-lg text-center font-bold text-purple-950 bg-white">
           </div>
         </div>
 
-        <h3 class="text-sm font-bold text-slate-700 mb-3" data-key="header_clinic_outcomes">التحويلات الصادرة من العيادة</h3>
+        <h3 class="text-sm font-bold text-slate-700 mb-3">التحويلات الصادرة من العيادة</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <div class="bg-slate-50 p-3 rounded-xl border">
-            <label class="block text-xs font-semibold text-slate-700 mb-1" data-key="out_lab">تحويل تحاليل معملية</label>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">تحويل تحاليل معملية</label>
             <input type="number" min="0" value="0" id="clinicOutLab" class="w-full px-2 py-1.5 border rounded-lg text-center font-bold bg-white">
           </div>
           <div class="bg-slate-50 p-3 rounded-xl border">
-            <label class="block text-xs font-semibold text-slate-700 mb-1" data-key="out_rad">تحويل أشعة وسونار</label>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">تحويل أشعة وسونار</label>
             <input type="number" min="0" value="0" id="clinicOutRad" class="w-full px-2 py-1.5 border rounded-lg text-center font-bold bg-white">
           </div>
           <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
-            <label class="block text-xs font-semibold text-amber-900 mb-1" data-key="out_inpatient">تنويم قسم داخلي</label>
+            <label class="block text-xs font-semibold text-amber-900 mb-1">تنويم قسم داخلي</label>
             <input type="number" min="0" value="0" id="clinicOutInpatient" class="w-full px-2 py-1.5 border rounded-lg text-center font-bold bg-white">
           </div>
           <div class="bg-rose-50 p-3 rounded-xl border border-rose-200">
-            <label class="block text-xs font-semibold text-rose-900 mb-1" data-key="out_or">تحويل عمليات جراحية</label>
+            <label class="block text-xs font-semibold text-rose-900 mb-1">تحويل عمليات جراحية</label>
             <input type="number" min="0" value="0" id="clinicOutOR" class="w-full px-2 py-1.5 border rounded-lg text-center font-bold bg-white">
           </div>
         </div>
 
-        <button onclick="saveClinicData()" class="w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition" data-key="btn_save_clinic">
-          حفظ كشوفات العيادة ✓
+        <button onclick="saveClinicData()" id="clinicSaveBtn" class="w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition">
+          حفظ وتحديث كشوفات العيادة ✓
         </button>
       </div>
     </div>
 
-    <!-- TAB 3: DOCTORS DIRECTORY -->
+    <!-- TAB 3: DOCTORS DIRECTORY (WITH EDIT & STATUS TOGGLE) -->
     <div id="view-doctors" class="tab-view hidden space-y-6">
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex justify-between items-center mb-4 pb-3 border-b">
           <div>
-            <h2 class="text-xl font-bold text-teal-900" data-key="doc_mgt_title">سجل الأطباء والاستشاريين</h2>
-            <p class="text-xs text-slate-500" data-key="doc_mgt_desc">تسجيل وتوزيع الأطباء العاملين بالمستشفى والاستشاريين الزائرين على الأقسام</p>
+            <h2 class="text-xl font-bold text-teal-900">سجل الأطباء وحالة العمل</h2>
+            <p class="text-xs text-slate-500">إضافة وتعديل بيانات الأطباء والتحكم في تفعيل أو إيقاف الطبيب أثناء الإجازات</p>
           </div>
+          <button onclick="cancelDoctorEdit()" id="docCancelEditBtn" class="hidden text-xs bg-rose-100 text-rose-800 px-3 py-1 rounded-lg font-bold">إلغاء التعديل</button>
         </div>
+
+        <input type="hidden" id="editingDoctorId" value="">
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_doc_name">اسم الطبيب</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">اسم الطبيب</label>
             <input type="text" id="docName" placeholder="د. الاسم بالكامل" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-semibold">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_doc_type">صفة العمل والتعاقد</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">صفة العمل والتعاقد</label>
             <select id="docType" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-medium">
-              <option value="staff" data-key="doc_type_staff">طبيب مقيم / عامل بالمستشفى</option>
-              <option value="visiting" data-key="doc_type_visiting">استشاري زائر / خارجي</option>
+              <option value="staff">طبيب مقيم / عامل بالمستشفى</option>
+              <option value="visiting">استشاري زائر / خارجي</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_department">القسم الطبي</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">القسم الطبي</label>
             <select id="docDepartment" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
               <option value="internal_medicine">عيادة الباطنة والقلب</option>
               <option value="general_surgery">عيادة الجراحة العامة</option>
@@ -323,17 +322,17 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_doc_phone">رقم الهاتف / التحويلة</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">رقم الهاتف / التحويلة</label>
             <input type="text" id="docPhone" placeholder="01xxxxxxxxx" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
           </div>
         </div>
 
-        <button onclick="saveDoctor()" class="bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2 rounded-xl text-sm shadow transition" data-key="btn_save_doctor">
+        <button onclick="saveDoctor()" id="docSubmitBtn" class="bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2 rounded-xl text-sm shadow transition">
           إضافة الطبيب للسجل ✓
         </button>
 
         <div class="mt-8 overflow-x-auto">
-          <h3 class="text-sm font-bold text-slate-800 mb-3" data-key="doc_list_title">قائمة الأطباء المعتمدين بالمنظومة</h3>
+          <h3 class="text-sm font-bold text-slate-800 mb-3">قائمة الأطباء وحالة التفعيل (إلغاء التفعيل يمنع ظهوره بالعيادات مع بقاء سجلاته)</h3>
           <table class="w-full text-xs text-center border-collapse">
             <thead>
               <tr class="bg-slate-100 text-slate-700 border-b font-bold">
@@ -341,7 +340,8 @@
                 <th class="p-2.5">نوع التعاقد</th>
                 <th class="p-2.5">القسم</th>
                 <th class="p-2.5">الهاتف</th>
-                <th class="p-2.5">الحالة</th>
+                <th class="p-2.5">حالة العمل</th>
+                <th class="p-2.5">إجراءات</th>
               </tr>
             </thead>
             <tbody id="doctorsTableBody" class="divide-y divide-slate-200">
@@ -356,53 +356,54 @@
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex flex-wrap justify-between items-center gap-4 mb-4 pb-3 border-b">
           <div>
-            <h2 class="text-xl font-bold text-teal-900" data-key="nursing_title">الإشغال الفندقي والسعة السريرية</h2>
-            <p class="text-xs text-slate-500" data-key="nursing_desc">الداخلي (12 سريراً) + الرعاية المركزة ICU (4 أسرة) + غرف الطوارئ (4)</p>
+            <h2 class="text-xl font-bold text-teal-900">الإشغال الفندقي والسعة السريرية</h2>
+            <p class="text-xs text-slate-500">الداخلي (12 سريراً) + الرعاية المركزة ICU (4 أسرة) + غرف الطوارئ (4)</p>
           </div>
-          <div id="nursingStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600">
-            جاهز للإدخال
+          <div class="flex items-center gap-2">
+            <span id="nursingStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600">جاهز للإدخال</span>
+            <button onclick="resetNursingForm()" class="text-xs bg-slate-200 hover:bg-slate-300 px-2.5 py-1 rounded-lg font-bold text-slate-700">تفريغ الحقول</button>
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_date">التاريخ</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">التاريخ</label>
             <input type="date" id="nursingDate" onchange="fetchExistingNursingData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_shift">الوردية</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">الوردية</label>
             <select id="nursingShift" onchange="fetchExistingNursingData()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
-              <option value="morning" data-key="opt_morning">الوردية الصباحية (Morning)</option>
-              <option value="evening" data-key="opt_evening">الوردية المسائية (Evening)</option>
+              <option value="morning">الوردية الصباحية (Morning)</option>
+              <option value="evening">الوردية المسائية (Evening)</option>
             </select>
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
-            <h4 class="text-xs font-bold text-amber-900 mb-1" data-key="bed_inpatient">القسم الداخلي (سعة 12 سريراً)</h4>
-            <label class="block text-xs text-slate-600 mb-1" data-key="lbl_occupied_beds">عدد الأسرة المشغولة الآن</label>
+            <h4 class="text-xs font-bold text-amber-900 mb-1">القسم الداخلي (سعة 12 سريراً)</h4>
+            <label class="block text-xs text-slate-600 mb-1">عدد الأسرة المشغولة الآن</label>
             <input type="number" min="0" max="12" value="0" id="nursingInpatientOccupied" class="w-full px-3 py-2 border rounded-lg text-center font-bold text-lg bg-white">
           </div>
           <div class="bg-rose-50 p-4 rounded-xl border border-rose-200">
-            <h4 class="text-xs font-bold text-rose-900 mb-1" data-key="bed_icu">العناية المركزة ICU (سعة 4 أسرة)</h4>
-            <label class="block text-xs text-slate-600 mb-1" data-key="lbl_occupied_beds">عدد الأسرة المشغولة الآن</label>
+            <h4 class="text-xs font-bold text-rose-900 mb-1">العناية المركزة ICU (سعة 4 أسرة)</h4>
+            <label class="block text-xs text-slate-600 mb-1">عدد الأسرة المشغولة الآن</label>
             <input type="number" min="0" max="4" value="0" id="nursingICUOccupied" class="w-full px-3 py-2 border rounded-lg text-center font-bold text-lg bg-white">
           </div>
           <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
-            <h4 class="text-xs font-bold text-blue-900 mb-1" data-key="bed_er">غرف الطوارئ (2 علاج + 2 ملاحظة)</h4>
-            <label class="block text-xs text-slate-600 mb-1" data-key="lbl_active_rooms">عدد الغرف المشغولة حالياً</label>
+            <h4 class="text-xs font-bold text-blue-900 mb-1">غرف الطوارئ (2 علاج + 2 ملاحظة)</h4>
+            <label class="block text-xs text-slate-600 mb-1">عدد الغرف المشغولة حالياً</label>
             <input type="number" min="0" max="4" value="0" id="nursingEROccupied" class="w-full px-3 py-2 border rounded-lg text-center font-bold text-lg bg-white">
           </div>
         </div>
 
         <div class="bg-slate-50 p-4 rounded-xl border mb-6">
-          <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_nursing_staff">قوة طاقم التمريض الحاضر بالوردية</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">قوة طاقم التمريض الحاضر بالوردية</label>
           <input type="number" min="0" value="0" id="nursingStaffCount" class="w-full sm:w-48 px-3 py-2 border rounded-lg font-bold text-center bg-white">
         </div>
 
-        <button onclick="saveNursingData()" class="w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition" data-key="btn_save_nursing">
-          حفظ تقرير التمريض والإشغال ✓
+        <button onclick="saveNursingData()" id="nursingSaveBtn" class="w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition">
+          حفظ وتحديث تقرير التمريض والإشغال ✓
         </button>
       </div>
     </div>
@@ -410,10 +411,10 @@
     <!-- TAB 5: REPORTS & EXCEL -->
     <div id="view-reports" class="tab-view hidden space-y-6">
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 no-print">
-        <h2 class="text-xl font-bold text-teal-900 mb-3" data-key="rep_filter_title">لوحة استخراج التقارير والتحليل</h2>
+        <h2 class="text-xl font-bold text-teal-900 mb-3">لوحة استخراج التقارير والتحليل</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-4">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="lbl_rep_type">نوع التقرير المطلوب</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">نوع التقرير المطلوب</label>
             <select id="reportTypeSelect" onchange="generateReport()" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-bold text-teal-900">
               <option value="all">1. التقرير المجمع الشامل (Executive)</option>
               <option value="er">2. تقرير قسم الطوارئ (ER Cases)</option>
@@ -422,23 +423,23 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="rep_from">من تاريخ</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">من تاريخ</label>
             <input type="date" id="reportFromDate" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1" data-key="rep_to">إلى تاريخ</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">إلى تاريخ</label>
             <input type="date" id="reportToDate" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
           </div>
           <div class="flex items-end">
-            <button onclick="generateReport()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-2 rounded-lg text-sm shadow transition" data-key="btn_run_report">
+            <button onclick="generateReport()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-2 rounded-lg text-sm shadow transition">
               استخراج التقرير 🔍
             </button>
           </div>
           <div class="flex items-end gap-2">
-            <button onclick="exportToExcel()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-sm shadow flex items-center justify-center gap-1 transition" data-key="btn_export_excel">
+            <button onclick="exportToExcel()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-sm shadow flex items-center justify-center gap-1 transition">
               <span>📊</span> Excel
             </button>
-            <button onclick="window.print()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-lg text-sm shadow flex items-center justify-center gap-1 transition" data-key="btn_print_a4">
+            <button onclick="window.print()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-lg text-sm shadow flex items-center justify-center gap-1 transition">
               <span>🖨️</span> A4
             </button>
           </div>
@@ -449,9 +450,9 @@
       <div id="reportContainer" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 print-page space-y-6">
         <div class="flex justify-between items-start border-b-2 border-teal-800 pb-4">
           <div>
-            <h2 class="text-2xl font-black text-teal-950" data-key="hosp_rep_name">مستشفى سيناء كلينك</h2>
-            <p class="text-sm font-bold text-slate-600" data-key="hosp_rep_sub">Sinai Clinic Hospital - Sharm El-Sheikh</p>
-            <p class="text-xs text-slate-500 mt-1" data-key="hosp_rep_city">هضبة أم سيد - جنوب سيناء - جمهورية مصر العربية</p>
+            <h2 class="text-2xl font-black text-teal-950">مستشفى سيناء كلينك</h2>
+            <p class="text-sm font-bold text-slate-600">Sinai Clinic Hospital - Sharm El-Sheikh</p>
+            <p class="text-xs text-slate-500 mt-1">هضبة أم سيد - جنوب سيناء - جمهورية مصر العربية</p>
           </div>
           <div class="text-left font-mono text-xs text-slate-500 space-y-1">
             <div id="reportHeaderTitle" class="font-bold text-slate-800 text-sm">التقرير التشغيلي المجمع</div>
@@ -462,32 +463,32 @@
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="bg-teal-50 p-4 rounded-xl border border-teal-200 text-center">
-            <div class="text-xs font-bold text-teal-900" data-key="kpi_er_total">إجمالي طوارئ (ER)</div>
+            <div class="text-xs font-bold text-teal-900">إجمالي طوارئ (ER)</div>
             <div id="kpiERTotal" class="text-3xl font-black text-teal-700 mt-1">0</div>
           </div>
           <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 text-center">
-            <div class="text-xs font-bold text-blue-900" data-key="kpi_clinics_total">إجمالي كشوفات العيادات</div>
+            <div class="text-xs font-bold text-blue-900">إجمالي كشوفات العيادات</div>
             <div id="kpiClinicsTotal" class="text-3xl font-black text-blue-700 mt-1">0</div>
           </div>
           <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 text-center">
-            <div class="text-xs font-bold text-amber-900" data-key="kpi_inpatient_admit">تحويلات التنويم الداخلي</div>
+            <div class="text-xs font-bold text-amber-900">تحويلات التنويم الداخلي</div>
             <div id="kpiInpatientTotal" class="text-3xl font-black text-amber-700 mt-1">0</div>
           </div>
           <div class="bg-rose-50 p-4 rounded-xl border border-rose-200 text-center">
-            <div class="text-xs font-bold text-rose-900" data-key="kpi_icu_admit">تحويلات الرعاية ICU</div>
+            <div class="text-xs font-bold text-rose-900">تحويلات الرعاية ICU</div>
             <div id="kpiICUTotal" class="text-3xl font-black text-rose-700 mt-1">0</div>
           </div>
         </div>
 
         <div id="chartsWrapper" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           <div class="border rounded-xl p-4 bg-slate-50">
-            <h4 class="text-xs font-bold text-slate-700 mb-2 text-center" data-key="chart_pie_title">توزيع الفئات والجنسيات</h4>
+            <h4 class="text-xs font-bold text-slate-700 mb-2 text-center">توزيع الفئات والجنسيات</h4>
             <div class="h-56 relative flex items-center justify-center">
               <canvas id="demographicsChart"></canvas>
             </div>
           </div>
           <div class="border rounded-xl p-4 bg-slate-50">
-            <h4 class="text-xs font-bold text-slate-700 mb-2 text-center" data-key="chart_bar_title">مسارات التصريف والتحويلات الطبية</h4>
+            <h4 class="text-xs font-bold text-slate-700 mb-2 text-center">مسارات التصريف والتحويلات الطبية</h4>
             <div class="h-56 relative flex items-center justify-center">
               <canvas id="outcomesChart"></canvas>
             </div>
@@ -537,7 +538,7 @@
 
   <script>
     // ----------------------------------------------------
-    // EXACT LIVE SUPABASE CREDENTIALS (VERIFIED 100%)
+    // EXACT LIVE SUPABASE CREDENTIALS
     // ----------------------------------------------------
     const SUPABASE_URL = 'https://urquujkncftrnzrpgrz.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVycXV1amtuY2Z0cm56cnBnenJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNTc1MTksImV4cCI6MjEwNTczMzUxOX0.EPe_uqUHz8ZaV9bCzCspxUaBqjX_PbiPg_-tssoNjYY';
@@ -553,169 +554,6 @@
     // BILINGUAL SETUP
     // ----------------------------------------------------
     let currentLang = 'ar';
-    const i18n = {
-      ar: {
-        hospital_title: "مستشفى سيناء كلينك - شرم الشيخ",
-        system_subtitle: "منظومة الإدارة والمتابعة والتقارير الطبية التنفيذية",
-        logout_btn: "تسجيل خروج",
-        nav_er: "🚨 الطوارئ (ER)",
-        nav_clinics: "🩺 العيادات الخارجية",
-        nav_doctors: "👨‍⚕️ الأطباء (داخلي/خارجي)",
-        nav_nursing: "🛏️ التمريض والإشغال",
-        nav_reports: "📑 التقارير وExcel",
-        login_welcome: "تسجيل الدخول للمنظومة",
-        login_note: "يرجى تسجيل الدخول بحساب المستخدم المعتمد لمستشفى سيناء كلينك",
-        login_email: "البريد الإلكتروني",
-        login_pass: "كلمة المرور",
-        login_submit: "دخول المنظومة",
-        er_title: "قسم الطوارئ والاستقبال (ER)",
-        er_desc: "السعة التشغيلية: 4 غرف (2 علاج فوري + 2 ملاحظة طبية)",
-        lbl_date: "التاريخ",
-        lbl_shift: "الوردية (12 ساعة)",
-        opt_morning: "الوردية الصباحية (Morning: 8:00 AM - 8:00 PM)",
-        opt_evening: "الوردية المسائية (Evening: 8:00 PM - 8:00 AM)",
-        lbl_supervisor: "مشرف الوردية",
-        header_patients: "👥 توزيع الحالات حسب الفئات",
-        cat_residents: "مصريون / مقيمون",
-        cat_russian: "سياحة روسية (Russian)",
-        cat_european: "سياحة أوروبية ودولية (European)",
-        lbl_er_total: "إجمالي حالات الطوارئ بالوردية:",
-        header_disposition: "🔄 مسارات التصريف والتحويلات",
-        disp_discharge: "خروج وملاحظة سريعة",
-        disp_inpatient: "تنويم قسم داخلي (12 س)",
-        disp_icu: "نقل عاجل لـ ICU (4 س)",
-        disp_or: "تحويل مباشر للعمليات (OR)",
-        header_diagnostics: "🧪 الفحوصات الطارئة المنفذة",
-        diag_lab: "فحوصات وتحاليل المختبر",
-        diag_rad: "فحوصات الأشعة والسونار",
-        btn_save_er: "حفظ وتحديث حركة الطوارئ ✓",
-        clinics_title: "كشوفات العيادات والأقسام التخصصية",
-        clinics_desc: "تشمل الأقسام المستحدثة: الأسنان، العلاج الطبيعي، السونار، الأشعة، والمعمل",
-        lbl_department: "القسم / التخصص",
-        lbl_doctor: "الطبيب المعالج",
-        header_clinic_outcomes: "التحويلات الصادرة من العيادة",
-        out_lab: "تحويل تحاليل معملية",
-        out_rad: "تحويل أشعة وسونار",
-        out_inpatient: "تنويم قسم داخلي",
-        out_or: "تحويل عمليات جراحية",
-        btn_save_clinic: "حفظ كشوفات العيادة ✓",
-        doc_mgt_title: "سجل الأطباء والاستشاريين",
-        doc_mgt_desc: "تسجيل وتوزيع الأطباء العاملين بالمستشفى والاستشاريين الزائرين على الأقسام",
-        lbl_doc_name: "اسم الطبيب",
-        lbl_doc_type: "صفة العمل والتعاقد",
-        doc_type_staff: "طبيب مقيم / عامل بالمستشفى",
-        doc_type_visiting: "استشاري زائر / خارجي",
-        lbl_doc_phone: "رقم الهاتف / التحويلة",
-        btn_save_doctor: "إضافة الطبيب للسجل ✓",
-        doc_list_title: "قائمة الأطباء المعتمدين بالمنظومة",
-        nursing_title: "الإشغال الفندقي والسعة السريرية",
-        nursing_desc: "الداخلي (12 سريراً) + الرعاية المركزة ICU (4 أسرة) + غرف الطوارئ (4)",
-        bed_inpatient: "القسم الداخلي (سعة 12 سريراً)",
-        bed_icu: "العناية المركزة ICU (سعة 4 أسرة)",
-        bed_er: "غرف الطوارئ (2 علاج + 2 ملاحظة)",
-        lbl_occupied_beds: "عدد الأسرة المشغولة الآن",
-        lbl_active_rooms: "عدد الغرف المشغولة حالياً",
-        lbl_nursing_staff: "قوة طاقم التمريض الحاضر بالوردية",
-        btn_save_nursing: "حفظ تقرير التمريض والإشغال ✓",
-        rep_filter_title: "لوحة استخراج التقارير والتحليل",
-        lbl_rep_type: "نوع التقرير المطلوب",
-        rep_from: "من تاريخ",
-        rep_to: "إلى تاريخ",
-        btn_run_report: "استخراج التقرير 🔍",
-        btn_export_excel: "Excel",
-        btn_print_a4: "A4",
-        hosp_rep_name: "مستشفى سيناء كلينك",
-        hosp_rep_sub: "Sinai Clinic Hospital - Sharm El-Sheikh",
-        hosp_rep_city: "هضبة أم سيد - جنوب سيناء - جمهورية مصر العربية",
-        kpi_er_total: "إجمالي طوارئ (ER)",
-        kpi_clinics_total: "إجمالي كشوفات العيادات",
-        kpi_inpatient_admit: "تحويلات التنويم الداخلي",
-        kpi_icu_admit: "تحويلات الرعاية ICU",
-        chart_pie_title: "توزيع الفئات والجنسيات",
-        chart_bar_title: "مسارات التصريف والتحويلات الطبية"
-      },
-      en: {
-        hospital_title: "Sinai Clinic Hospital - Sharm El-Sheikh",
-        system_subtitle: "Executive Medical Management & Clinical Reporting System",
-        logout_btn: "Sign Out",
-        nav_er: "🚨 Emergency (ER)",
-        nav_clinics: "🩺 Outpatient Clinics",
-        nav_doctors: "👨‍⚕️ Physicians (Staff/Visiting)",
-        nav_nursing: "🛏️ Inpatient Beds & ICU",
-        nav_reports: "📑 Reports & Excel",
-        login_welcome: "Hospital System Login",
-        login_note: "Please log in with your authorized Sinai Clinic credentials",
-        login_email: "Email Address",
-        login_pass: "Password",
-        login_submit: "Access System",
-        er_title: "Emergency & Reception Dept (ER)",
-        er_desc: "Operating Capacity: 4 Rooms (2 Treatment + 2 Observation)",
-        lbl_date: "Date",
-        lbl_shift: "Operating Shift (12 Hours)",
-        opt_morning: "Morning Shift (8:00 AM - 8:00 PM)",
-        opt_evening: "Evening Shift (8:00 PM - 8:00 AM)",
-        lbl_supervisor: "Shift Supervisor",
-        header_patients: "👥 Demographic Breakdown",
-        cat_residents: "Egyptian Residents",
-        cat_russian: "Russian Tourism",
-        cat_european: "European & Other",
-        lbl_er_total: "Total Shift ER Cases:",
-        header_disposition: "🔄 Patient Outcomes & Referrals",
-        disp_discharge: "Discharged / Quick Care",
-        disp_inpatient: "Admitted Ward (12 Beds)",
-        disp_icu: "Urgent ICU Admit (4 Beds)",
-        disp_or: "Direct Surgery (OR)",
-        header_diagnostics: "🧪 Emergency Diagnostics",
-        diag_lab: "Clinical Lab Tests",
-        diag_rad: "Radiology & Ultrasound",
-        btn_save_er: "Save & Update ER Movement ✓",
-        clinics_title: "Specialized Clinics & Outpatient Depts",
-        clinics_desc: "Including Dental, Physiotherapy, Ultrasound, Radiology, and Laboratory",
-        lbl_department: "Department / Specialty",
-        lbl_doctor: "Attending Doctor",
-        header_clinic_outcomes: "Referrals Issued from Clinic",
-        out_lab: "Lab Referrals",
-        out_rad: "Radiology Referrals",
-        out_inpatient: "Inpatient Admission",
-        out_or: "Surgical Referral (OR)",
-        btn_save_clinic: "Save Clinic Patient Log ✓",
-        doc_mgt_title: "Doctors & Consultants Directory",
-        doc_mgt_desc: "Management of Hospital Medical Staff and Visiting External Consultants",
-        lbl_doc_name: "Doctor Name",
-        lbl_doc_type: "Employment Status",
-        doc_type_staff: "Hospital Staff Physician",
-        doc_type_visiting: "Visiting Consultant",
-        lbl_doc_phone: "Phone / Extension",
-        btn_save_doctor: "Add Doctor to Registry ✓",
-        doc_list_title: "Authorized Medical Staff Roster",
-        nursing_title: "Hospital Bed Occupancy & Capacity",
-        nursing_desc: "Inpatient Ward (12 Beds) + ICU (4 Beds) + ER Rooms (4)",
-        bed_inpatient: "Inpatient Ward (Capacity: 12)",
-        bed_icu: "Intensive Care ICU (Capacity: 4)",
-        bed_er: "ER Rooms (2 Treatment + 2 Obs)",
-        lbl_occupied_beds: "Current Occupied Beds",
-        lbl_active_rooms: "Current Active Rooms",
-        lbl_nursing_staff: "Nursing Duty Staff Count",
-        btn_save_nursing: "Save Nursing Occupancy Log ✓",
-        rep_filter_title: "Reporting & Analytical Dashboard",
-        lbl_rep_type: "Select Report Type",
-        rep_from: "From Date",
-        rep_to: "To Date",
-        btn_run_report: "Generate Report 🔍",
-        btn_export_excel: "Excel",
-        btn_print_a4: "A4",
-        hosp_rep_name: "Sinai Clinic Hospital",
-        hosp_rep_sub: "Sinai Clinic Hospital - Sharm El-Sheikh",
-        hosp_rep_city: "Om El-Sid Hill - South Sinai - Egypt",
-        kpi_er_total: "Total ER Volume",
-        kpi_clinics_total: "Total Clinic Visits",
-        kpi_inpatient_admit: "Ward Admissions",
-        kpi_icu_admit: "ICU Admissions",
-        chart_pie_title: "Nationality & Demographic Share",
-        chart_bar_title: "Total Referrals & Patient Outcomes"
-      }
-    };
-
     function toggleLanguage() {
       currentLang = currentLang === 'ar' ? 'en' : 'ar';
       document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
@@ -725,12 +563,6 @@
       } else {
         document.body.classList.remove('ltr-mode');
       }
-      document.querySelectorAll('[data-key]').forEach(el => {
-        const key = el.getAttribute('data-key');
-        if(i18n[currentLang][key]) {
-          el.innerText = i18n[currentLang][key];
-        }
-      });
       if(!document.getElementById('view-reports').classList.contains('hidden')) {
         generateReport();
       }
@@ -764,7 +596,6 @@
           showLogin();
         }
       } catch (err) {
-        console.warn("Session check fallback", err);
         showLogin();
       }
     }
@@ -818,7 +649,7 @@
         errBox.innerText = err.message || 'بيانات الدخول غير صحيحة';
         errBox.classList.remove('hidden');
       } finally {
-        btn.innerText = i18n[currentLang].login_submit;
+        btn.innerText = 'دخول المنظومة';
         btn.disabled = false;
       }
     }
@@ -829,9 +660,6 @@
       showLogin();
     }
 
-    // ----------------------------------------------------
-    // TAB SWITCHER
-    // ----------------------------------------------------
     function switchTab(tabId) {
       document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
       document.querySelectorAll('.tab-link').forEach(link => {
@@ -852,40 +680,50 @@
     }
 
     // ----------------------------------------------------
-    // DOCTORS REGISTRY
+    // ADVANCED DOCTORS DIRECTORY (EDIT & DEACTIVATE)
     // ----------------------------------------------------
-    let doctorsList = [];
+    let doctorsList = [
+      { id: '1', name: 'د. تامر التهامي', doc_type: 'staff', department: 'internal_medicine', phone: '0100000001', is_active: true },
+      { id: '2', name: 'د. استشاري عظام زائر', doc_type: 'visiting', department: 'orthopedics', phone: '0100000002', is_active: true }
+    ];
 
     async function loadDoctors() {
       try {
         const { data } = await supabaseClient.from('doctors').select('*').order('name');
         if (data && data.length > 0) {
           doctorsList = data;
-        } else {
-          doctorsList = [
-            { id: 1, name: 'د. تامر التهامي', doc_type: 'staff', department: 'internal_medicine', phone: '0100000001' },
-            { id: 2, name: 'د. استشاري عظام زائر', doc_type: 'visiting', department: 'orthopedics', phone: '0100000002' }
-          ];
         }
-        renderDoctorsTable();
-        filterDoctorsByDept();
       } catch(e) {
-        renderDoctorsTable();
+        console.warn("Using local doctors registry", e);
       }
+      renderDoctorsTable();
+      filterDoctorsByDept();
     }
 
     function renderDoctorsTable() {
       const tbody = document.getElementById('doctorsTableBody');
       tbody.innerHTML = '';
+
       doctorsList.forEach(d => {
+        const isActive = d.is_active !== false;
         const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50";
+        tr.className = `hover:bg-slate-50 ${isActive ? '' : 'bg-slate-100 opacity-60'}`;
         tr.innerHTML = `
           <td class="p-2.5 font-bold text-slate-800">${d.name}</td>
           <td class="p-2.5"><span class="px-2 py-0.5 rounded text-xs ${d.doc_type === 'visiting' ? 'bg-purple-100 text-purple-800 font-bold' : 'bg-teal-100 text-teal-800 font-semibold'}">${d.doc_type === 'visiting' ? 'استشاري خارجي' : 'طبيب مقيم'}</span></td>
           <td class="p-2.5 text-slate-600">${d.department}</td>
           <td class="p-2.5 font-mono text-slate-500">${d.phone || '-'}</td>
-          <td class="p-2.5 text-emerald-600 font-bold">نشط ✓</td>
+          <td class="p-2.5 font-bold">
+            <span class="px-2 py-0.5 rounded-full text-xs ${isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+              ${isActive ? 'نشط بالعيادات ✓' : 'موقوف / إجازة ⏸'}
+            </span>
+          </td>
+          <td class="p-2.5 flex items-center justify-center gap-1.5">
+            <button onclick="editDoctor('${d.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">تعديل</button>
+            <button onclick="toggleDoctorStatus('${d.id}')" class="${isActive ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white px-2 py-1 rounded text-xs font-semibold">
+              ${isActive ? 'إيقاف مؤقت' : 'إعادة تفعيل'}
+            </button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -896,14 +734,15 @@
       const selectEl = document.getElementById('clinicDoctorSelect');
       selectEl.innerHTML = '';
 
-      const matched = doctorsList.filter(d => d.department === selectedDept);
-      if(matched.length === 0) {
+      // Only display ACTIVE doctors in dropdowns
+      const activeDoctors = doctorsList.filter(d => d.department === selectedDept && d.is_active !== false);
+      if(activeDoctors.length === 0) {
         const opt = document.createElement('option');
         opt.value = "general";
-        opt.innerText = "طبيب القسم العام";
+        opt.innerText = "طبيب القسم العام (أو لا يوجد طبيب نشط)";
         selectEl.appendChild(opt);
       } else {
-        matched.forEach(doc => {
+        activeDoctors.forEach(doc => {
           const opt = document.createElement('option');
           opt.value = doc.name;
           opt.innerText = `${doc.name} (${doc.doc_type === 'visiting' ? 'استشاري زائر' : 'مقيم'})`;
@@ -912,7 +751,48 @@
       }
     }
 
+    function editDoctor(id) {
+      const doc = doctorsList.find(d => String(d.id) === String(id));
+      if (!doc) return;
+
+      document.getElementById('editingDoctorId').value = doc.id;
+      document.getElementById('docName').value = doc.name;
+      document.getElementById('docType').value = doc.doc_type;
+      document.getElementById('docDepartment').value = doc.department;
+      document.getElementById('docPhone').value = doc.phone || '';
+
+      document.getElementById('docSubmitBtn').innerText = 'تحديث بيانات الطبيب ✓';
+      document.getElementById('docSubmitBtn').className = 'bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2 rounded-xl text-sm shadow transition';
+      document.getElementById('docCancelEditBtn').classList.remove('hidden');
+    }
+
+    function cancelDoctorEdit() {
+      document.getElementById('editingDoctorId').value = '';
+      document.getElementById('docName').value = '';
+      document.getElementById('docPhone').value = '';
+      document.getElementById('docSubmitBtn').innerText = 'إضافة الطبيب للسجل ✓';
+      document.getElementById('docSubmitBtn').className = 'bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2 rounded-xl text-sm shadow transition';
+      document.getElementById('docCancelEditBtn').classList.add('hidden');
+    }
+
+    async function toggleDoctorStatus(id) {
+      const doc = doctorsList.find(d => String(d.id) === String(id));
+      if (!doc) return;
+
+      doc.is_active = doc.is_active === false ? true : false;
+
+      try {
+        await supabaseClient.from('doctors').update({ is_active: doc.is_active }).eq('id', doc.id);
+      } catch(e) {
+        console.warn("Status toggle local fallback", e);
+      }
+
+      renderDoctorsTable();
+      filterDoctorsByDept();
+    }
+
     async function saveDoctor() {
+      const id = document.getElementById('editingDoctorId').value;
       const name = document.getElementById('docName').value.trim();
       const doc_type = document.getElementById('docType').value;
       const department = document.getElementById('docDepartment').value;
@@ -923,21 +803,37 @@
         return;
       }
 
-      try {
-        await supabaseClient.from('doctors').insert([{ name, doc_type, department, phone }]);
-      } catch(e) {
-        console.warn("Saved in active session", e);
+      if (id) {
+        // Update existing doctor
+        const doc = doctorsList.find(d => String(d.id) === String(id));
+        if (doc) {
+          doc.name = name;
+          doc.doc_type = doc_type;
+          doc.department = department;
+          doc.phone = phone;
+        }
+        try {
+          await supabaseClient.from('doctors').update({ name, doc_type, department, phone }).eq('id', id);
+        } catch(e) {}
+        alert('تم تحديث بيانات الطبيب بنجاح ✓');
+        cancelDoctorEdit();
+      } else {
+        // Insert new doctor
+        const newDoc = { id: Date.now().toString(), name, doc_type, department, phone, is_active: true };
+        doctorsList.push(newDoc);
+        try {
+          await supabaseClient.from('doctors').insert([newDoc]);
+        } catch(e) {}
+        alert('تمت إضافة الطبيب بنجاح ✓');
+        cancelDoctorEdit();
       }
-      doctorsList.push({ name, doc_type, department, phone });
+
       renderDoctorsTable();
       filterDoctorsByDept();
-      document.getElementById('docName').value = '';
-      document.getElementById('docPhone').value = '';
-      alert('تمت إضافة الطبيب بنجاح ✓');
     }
 
     // ----------------------------------------------------
-    // ER LOGS PRE-FILL & SAVE
+    // ER DATA MANAGEMENT & AUTO PRE-FILL
     // ----------------------------------------------------
     function calcERTotal() {
       const res = parseInt(document.getElementById('erResidents').value) || 0;
@@ -946,10 +842,31 @@
       document.getElementById('erTotalCasesBadge').innerText = res + rus + eur;
     }
 
+    function resetERForm() {
+      document.getElementById('erResidents').value = 0;
+      document.getElementById('erRussian').value = 0;
+      document.getElementById('erEuropean').value = 0;
+      document.getElementById('erDischarge').value = 0;
+      document.getElementById('erInpatient').value = 0;
+      document.getElementById('erICU').value = 0;
+      document.getElementById('erOR').value = 0;
+      document.getElementById('erLabOrders').value = 0;
+      document.getElementById('erRadOrders').value = 0;
+      document.getElementById('erSupervisor').value = '';
+      calcERTotal();
+      const badge = document.getElementById('erStatusBadge');
+      badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600";
+      badge.innerText = "جاهز للإدخال (جديد)";
+      const btn = document.getElementById('erSaveBtn');
+      btn.innerText = "حفظ حركة الطوارئ ✓";
+      btn.className = "w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
+    }
+
     async function fetchExistingERData() {
       const date = document.getElementById('erDate').value;
       const shift = document.getElementById('erShift').value;
       const badge = document.getElementById('erStatusBadge');
+      const btn = document.getElementById('erSaveBtn');
 
       badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-amber-100 text-amber-800";
       badge.innerText = "جاري الفحص...";
@@ -974,21 +891,13 @@
           document.getElementById('erRadOrders').value = data.rad_orders || 0;
           document.getElementById('erSupervisor').value = data.supervisor || '';
 
-          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-emerald-100 text-emerald-800";
-          badge.innerText = "تم استرجاع السجل السابق ✓";
-        } else {
-          document.getElementById('erResidents').value = 0;
-          document.getElementById('erRussian').value = 0;
-          document.getElementById('erEuropean').value = 0;
-          document.getElementById('erDischarge').value = 0;
-          document.getElementById('erInpatient').value = 0;
-          document.getElementById('erICU').value = 0;
-          document.getElementById('erOR').value = 0;
-          document.getElementById('erLabOrders').value = 0;
-          document.getElementById('erRadOrders').value = 0;
+          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-blue-100 text-blue-800";
+          badge.innerText = "تم استرجاع السجل (جاهز للتعديل) ✏️";
 
-          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600";
-          badge.innerText = "جاهز للإدخال (جديد)";
+          btn.innerText = "تحديث وتعديل البيانات المسجلة ✓";
+          btn.className = "w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
+        } else {
+          resetERForm();
         }
         calcERTotal();
       } catch (err) {
@@ -1020,12 +929,11 @@
       try {
         const { error } = await supabaseClient.from('er_logs').upsert(payload, { onConflict: 'log_date,shift' });
         if (error) throw error;
-        alert('تم حفظ حركة الطوارئ بنجاح ✓');
+        alert('تم حفظ وتحديث بيانات الطوارئ بنجاح ✓');
         fetchExistingERData();
       } catch (err) {
         alert('حدث خطأ أثناء الحفظ: ' + err.message);
       } finally {
-        btn.innerText = i18n[currentLang].btn_save_er;
         btn.disabled = false;
       }
     }
@@ -1033,11 +941,28 @@
     // ----------------------------------------------------
     // CLINIC PRE-FILL & SAVE
     // ----------------------------------------------------
+    function resetClinicForm() {
+      document.getElementById('clinicResidents').value = 0;
+      document.getElementById('clinicRussian').value = 0;
+      document.getElementById('clinicEuropean').value = 0;
+      document.getElementById('clinicOutLab').value = 0;
+      document.getElementById('clinicOutRad').value = 0;
+      document.getElementById('clinicOutInpatient').value = 0;
+      document.getElementById('clinicOutOR').value = 0;
+      const badge = document.getElementById('clinicStatusBadge');
+      badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600";
+      badge.innerText = "جاهز للإدخال (جديد)";
+      const btn = document.getElementById('clinicSaveBtn');
+      btn.innerText = "حفظ كشوفات العيادة ✓";
+      btn.className = "w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
+    }
+
     async function fetchExistingClinicData() {
       const date = document.getElementById('clinicDate').value;
       const shift = document.getElementById('clinicShift').value;
       const dept = document.getElementById('clinicDeptSelect').value;
       const badge = document.getElementById('clinicStatusBadge');
+      const btn = document.getElementById('clinicSaveBtn');
 
       badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-amber-100 text-amber-800";
       badge.innerText = "جاري الفحص...";
@@ -1059,20 +984,15 @@
           document.getElementById('clinicOutRad').value = data.rad_transfers || 0;
           document.getElementById('clinicOutInpatient').value = data.inpatient_admitted || 0;
           document.getElementById('clinicOutOR').value = data.or_transferred || 0;
+          if (data.doctor_name) document.getElementById('clinicDoctorSelect').value = data.doctor_name;
 
-          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-emerald-100 text-emerald-800";
-          badge.innerText = "تم استرجاع سجل العيادة ✓";
+          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-blue-100 text-blue-800";
+          badge.innerText = "تم استرجاع السجل (جاهز للتعديل) ✏️";
+
+          btn.innerText = "تحديث وتعديل كشوفات العيادة ✓";
+          btn.className = "w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
         } else {
-          document.getElementById('clinicResidents').value = 0;
-          document.getElementById('clinicRussian').value = 0;
-          document.getElementById('clinicEuropean').value = 0;
-          document.getElementById('clinicOutLab').value = 0;
-          document.getElementById('clinicOutRad').value = 0;
-          document.getElementById('clinicOutInpatient').value = 0;
-          document.getElementById('clinicOutOR').value = 0;
-
-          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600";
-          badge.innerText = "جاهز للإدخال (جديد)";
+          resetClinicForm();
         }
       } catch (err) {
         badge.innerText = "جاهز للإدخال";
@@ -1098,7 +1018,7 @@
       try {
         const { error } = await supabaseClient.from('clinic_logs').upsert(payload, { onConflict: 'log_date,shift,department_code' });
         if (error) throw error;
-        alert('تم حفظ كشوفات العيادة بنجاح ✓');
+        alert('تم حفظ وتحديث كشوفات العيادة بنجاح ✓');
         fetchExistingClinicData();
       } catch (err) {
         alert('خطأ: ' + err.message);
@@ -1108,10 +1028,24 @@
     // ----------------------------------------------------
     // NURSING PRE-FILL & SAVE
     // ----------------------------------------------------
+    function resetNursingForm() {
+      document.getElementById('nursingInpatientOccupied').value = 0;
+      document.getElementById('nursingICUOccupied').value = 0;
+      document.getElementById('nursingEROccupied').value = 0;
+      document.getElementById('nursingStaffCount').value = 0;
+      const badge = document.getElementById('nursingStatusBadge');
+      badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600";
+      badge.innerText = "جاهز للإدخال (جديد)";
+      const btn = document.getElementById('nursingSaveBtn');
+      btn.innerText = "حفظ تقرير التمريض والإشغال ✓";
+      btn.className = "w-full sm:w-auto bg-teal-700 hover:bg-teal-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
+    }
+
     async function fetchExistingNursingData() {
       const date = document.getElementById('nursingDate').value;
       const shift = document.getElementById('nursingShift').value;
       const badge = document.getElementById('nursingStatusBadge');
+      const btn = document.getElementById('nursingSaveBtn');
 
       try {
         const { data } = await supabaseClient
@@ -1126,15 +1060,14 @@
           document.getElementById('nursingICUOccupied').value = data.icu_occupied || 0;
           document.getElementById('nursingEROccupied').value = data.er_occupied || 0;
           document.getElementById('nursingStaffCount').value = data.staff_count || 0;
-          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-emerald-100 text-emerald-800";
-          badge.innerText = "تم استرجاع تقرير التمريض ✓";
+
+          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-blue-100 text-blue-800";
+          badge.innerText = "تم استرجاع التقرير (جاهز للتعديل) ✏️";
+
+          btn.innerText = "تحديث وتعديل تقرير الإشغال ✓";
+          btn.className = "w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
         } else {
-          document.getElementById('nursingInpatientOccupied').value = 0;
-          document.getElementById('nursingICUOccupied').value = 0;
-          document.getElementById('nursingEROccupied').value = 0;
-          document.getElementById('nursingStaffCount').value = 0;
-          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600";
-          badge.innerText = "جاهز للإدخال (جديد)";
+          resetNursingForm();
         }
       } catch (e) {
         badge.innerText = "جاهز للإدخال";
@@ -1155,7 +1088,7 @@
       try {
         const { error } = await supabaseClient.from('nursing_occupancy').upsert(payload, { onConflict: 'log_date,shift' });
         if (error) throw error;
-        alert('تم حفظ إشغال التمريض بنجاح ✓');
+        alert('تم حفظ وتحديث إشغال التمريض بنجاح ✓');
         fetchExistingNursingData();
       } catch(err) {
         alert('خطأ: ' + err.message);
