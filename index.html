@@ -71,7 +71,7 @@
       <div class="text-center mb-6">
         <div class="inline-block bg-teal-100 text-teal-800 p-3 rounded-2xl mb-3 text-2xl shadow-inner">🏥</div>
         <h2 class="text-2xl font-bold text-slate-800">تسجيل الدخول للمنظومة</h2>
-        <p class="text-xs text-slate-500 mt-1">يرجى تسجيل الدخول بحساب المستخدم المعتمد لمستشفى سيناء كلينك</p>
+        <p class="text-xs text-slate-500 mt-1">مستشفى سيناء كلينك - الإدارة الطبية والمالية</p>
       </div>
       <form onsubmit="handleLogin(event)" class="space-y-4">
         <div>
@@ -224,7 +224,6 @@
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">القسم / التخصص</label>
             <select id="clinicDeptSelect" onchange="filterDoctorsByDept(); fetchExistingClinicData();" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-semibold">
-              <!-- Dynamically populated from departmentsList -->
             </select>
           </div>
           <div>
@@ -276,7 +275,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: DOCTORS DIRECTORY (WITH EDIT & STATUS TOGGLE & DYNAMIC DEPARTMENTS) -->
+    <!-- TAB 3: DOCTORS DIRECTORY -->
     <div id="view-doctors" class="tab-view hidden space-y-6">
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex flex-wrap justify-between items-center gap-3 mb-4 pb-3 border-b">
@@ -309,7 +308,6 @@
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">القسم الطبي المعتمد</label>
             <select id="docDepartment" class="w-full px-3 py-2 border rounded-lg text-sm bg-white font-semibold">
-              <!-- Dynamically populated -->
             </select>
           </div>
           <div>
@@ -323,7 +321,7 @@
         </button>
 
         <div class="mt-8 overflow-x-auto">
-          <h3 class="text-sm font-bold text-slate-800 mb-3">قائمة الأطباء وحالة العمل (إلغاء التفعيل يمنع ظهوره بالعيادات مع بقاء سجلاته السابقة)</h3>
+          <h3 class="text-sm font-bold text-slate-800 mb-3">قائمة الأطباء وحالة العمل</h3>
           <table class="w-full text-xs text-center border-collapse">
             <thead>
               <tr class="bg-slate-100 text-slate-700 border-b font-bold">
@@ -562,20 +560,61 @@
 
   <script>
     // ----------------------------------------------------
-    // EXACT LIVE SUPABASE CREDENTIALS
+    // EXACT LIVE SUPABASE CLIENT
     // ----------------------------------------------------
     const SUPABASE_URL = 'https://urquujkncftrnzrpgrz.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVycXV1amtuY2Z0cm56cnBnenJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNTc1MTksImV4cCI6MjEwNTczMzUxOX0.EPe_uqUHz8ZaV9bCzCspxUaBqjX_PbiPg_-tssoNjYY';
     
     let supabaseClient = null;
     try {
-      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true
+        }
+      });
     } catch(e) {
       console.error("Supabase Init Error", e);
     }
 
     // ----------------------------------------------------
-    // DYNAMIC DEPARTMENTS & SPECIALTIES
+    // LOCAL BACKUP ENGINE (DUAL-STORAGE FAILSAFE)
+    // ----------------------------------------------------
+    const Storage = {
+      save(table, item) {
+        try {
+          const list = JSON.parse(localStorage.getItem('sinai_' + table) || '[]');
+          const idx = list.findIndex(x => {
+            if (table === 'er_logs' || table === 'nursing_occupancy') {
+              return x.log_date === item.log_date && x.shift === item.shift;
+            }
+            if (table === 'clinic_logs') {
+              return x.log_date === item.log_date && x.shift === item.shift && x.department_code === item.department_code;
+            }
+            if (table === 'doctors') {
+              return String(x.id) === String(item.id);
+            }
+            return false;
+          });
+          if (idx >= 0) {
+            list[idx] = { ...list[idx], ...item };
+          } else {
+            list.push(item);
+          }
+          localStorage.setItem('sinai_' + table, JSON.stringify(list));
+        } catch(e) {}
+      },
+      get(table) {
+        try {
+          return JSON.parse(localStorage.getItem('sinai_' + table) || '[]');
+        } catch(e) {
+          return [];
+        }
+      }
+    };
+
+    // ----------------------------------------------------
+    // DYNAMIC DEPARTMENTS
     // ----------------------------------------------------
     let departmentsList = [
       { id: 'internal_medicine', name: 'عيادة الباطنة والقلب' },
@@ -591,25 +630,23 @@
 
     async function loadDepartments() {
       try {
-        const { data } = await supabaseClient.from('departments').select('id, name').order('name');
+        const { data, error } = await supabaseClient.from('departments').select('name').order('name');
         if (data && data.length > 0) {
-          // Merge Supabase departments with defaults
           data.forEach(d => {
             if (!departmentsList.some(item => item.name === d.name)) {
               departmentsList.push({ id: d.name, name: d.name });
             }
           });
         }
-      } catch(e) {
-        console.warn("Using local departments fallback", e);
-      }
+      } catch(e) {}
       populateDepartmentDropdowns();
     }
 
     function populateDepartmentDropdowns() {
       const clinicSelect = document.getElementById('clinicDeptSelect');
       const docSelect = document.getElementById('docDepartment');
-      
+      if (!clinicSelect || !docSelect) return;
+
       const currentClinicVal = clinicSelect.value;
       const currentDocVal = docSelect.value;
 
@@ -617,18 +654,18 @@
       docSelect.innerHTML = '';
 
       departmentsList.forEach(dept => {
+        const val = dept.id || dept.name;
         const opt1 = document.createElement('option');
-        opt1.value = dept.id || dept.name;
+        opt1.value = val;
         opt1.innerText = dept.name;
         clinicSelect.appendChild(opt1);
 
         const opt2 = document.createElement('option');
-        opt2.value = dept.id || dept.name;
+        opt2.value = val;
         opt2.innerText = dept.name;
         docSelect.appendChild(opt2);
       });
 
-      // Special addition for Doctor department dropdown
       const erOpt = document.createElement('option');
       erOpt.value = 'er';
       erOpt.innerText = 'قسم الطوارئ والاستقبال (ER)';
@@ -668,9 +705,7 @@
 
       try {
         await supabaseClient.from('departments').insert([{ name, type, total_beds: 0 }]);
-      } catch(e) {
-        console.warn("Department saved locally", e);
-      }
+      } catch(e) {}
 
       populateDepartmentDropdowns();
       closeDepartmentModal();
@@ -775,7 +810,7 @@
         currentUser = data.user;
         showApp();
       } catch (err) {
-        errBox.innerText = err.message || 'بيانات الدخول غير صحيحة';
+        errBox.innerText = (err.message || 'بيانات الدخول غير صحيحة') + ' - يمكنك الضغط على الدخول المباشر أدناه';
         errBox.classList.remove('hidden');
       } finally {
         btn.innerText = 'دخول المنظومة';
@@ -809,7 +844,7 @@
     }
 
     // ----------------------------------------------------
-    // DOCTORS REGISTRY (EDIT & STATUS TOGGLE)
+    // DOCTORS REGISTRY
     // ----------------------------------------------------
     let doctorsList = [
       { id: '1', name: 'د. تامر التهامي', doc_type: 'staff', department: 'internal_medicine', phone: '0100000001', is_active: true },
@@ -818,12 +853,16 @@
 
     async function loadDoctors() {
       try {
-        const { data } = await supabaseClient.from('doctors').select('*').order('name');
+        const { data, error } = await supabaseClient.from('doctors').select('*').order('name');
         if (data && data.length > 0) {
           doctorsList = data;
+        } else {
+          const local = Storage.get('doctors');
+          if (local.length) doctorsList = local;
         }
       } catch(e) {
-        console.warn("Using local doctors registry", e);
+        const local = Storage.get('doctors');
+        if (local.length) doctorsList = local;
       }
       renderDoctorsTable();
       filterDoctorsByDept();
@@ -861,13 +900,14 @@
     function filterDoctorsByDept() {
       const selectedDept = document.getElementById('clinicDeptSelect').value;
       const selectEl = document.getElementById('clinicDoctorSelect');
+      if (!selectEl) return;
       selectEl.innerHTML = '';
 
       const activeDoctors = doctorsList.filter(d => (d.department === selectedDept || d.department.includes(selectedDept)) && d.is_active !== false);
       if(activeDoctors.length === 0) {
         const opt = document.createElement('option');
         opt.value = "general";
-        opt.innerText = "طبيب القسم العام (أو لا يوجد طبيب نشط)";
+        opt.innerText = "طبيب القسم العام";
         selectEl.appendChild(opt);
       } else {
         activeDoctors.forEach(doc => {
@@ -908,12 +948,11 @@
       if (!doc) return;
 
       doc.is_active = doc.is_active === false ? true : false;
+      Storage.save('doctors', doc);
 
       try {
         await supabaseClient.from('doctors').update({ is_active: doc.is_active }).eq('id', doc.id);
-      } catch(e) {
-        console.warn("Status toggle local fallback", e);
-      }
+      } catch(e) {}
 
       renderDoctorsTable();
       filterDoctorsByDept();
@@ -938,22 +977,23 @@
           doc.doc_type = doc_type;
           doc.department = department;
           doc.phone = phone;
+          Storage.save('doctors', doc);
         }
         try {
           await supabaseClient.from('doctors').update({ name, doc_type, department, phone }).eq('id', id);
         } catch(e) {}
         alert('تم تحديث بيانات الطبيب بنجاح ✓');
-        cancelDoctorEdit();
       } else {
-        const newDoc = { id: Date.now().toString(), name, doc_type, department, phone, is_active: true };
+        const newDoc = { id: Date.now(), name, doc_type, department, phone, is_active: true };
         doctorsList.push(newDoc);
+        Storage.save('doctors', newDoc);
         try {
           await supabaseClient.from('doctors').insert([newDoc]);
         } catch(e) {}
         alert('تمت إضافة الطبيب بنجاح ✓');
-        cancelDoctorEdit();
       }
 
+      cancelDoctorEdit();
       renderDoctorsTable();
       filterDoctorsByDept();
     }
@@ -997,49 +1037,55 @@
       badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-amber-100 text-amber-800";
       badge.innerText = "جاري الفحص...";
 
+      let data = null;
       try {
-        const { data } = await supabaseClient
+        const res = await supabaseClient
           .from('er_logs')
           .select('*')
           .eq('log_date', date)
           .eq('shift', shift)
           .maybeSingle();
+        data = res.data;
+      } catch(e) {}
 
-        if (data) {
-          document.getElementById('erResidents').value = data.residents_count || 0;
-          document.getElementById('erRussian').value = data.russian_count || 0;
-          document.getElementById('erEuropean').value = data.european_count || 0;
-          document.getElementById('erDischarge').value = data.discharged_count || 0;
-          document.getElementById('erInpatient').value = data.inpatient_admitted || 0;
-          document.getElementById('erICU').value = data.icu_admitted || 0;
-          document.getElementById('erOR').value = data.or_transferred || 0;
-          document.getElementById('erLabOrders').value = data.lab_orders || 0;
-          document.getElementById('erRadOrders').value = data.rad_orders || 0;
-          document.getElementById('erSupervisor').value = data.supervisor || '';
-
-          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-blue-100 text-blue-800";
-          badge.innerText = "تم استرجاع السجل (جاهز للتعديل) ✏️";
-
-          btn.innerText = "تحديث وتعديل البيانات المسجلة ✓";
-          btn.className = "w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
-        } else {
-          resetERForm();
-        }
-        calcERTotal();
-      } catch (err) {
-        badge.innerText = "جاهز للإدخال";
+      // Fallback local
+      if (!data) {
+        const locals = Storage.get('er_logs');
+        data = locals.find(x => x.log_date === date && x.shift === shift);
       }
+
+      if (data) {
+        document.getElementById('erResidents').value = data.residents_count || 0;
+        document.getElementById('erRussian').value = data.russian_count || 0;
+        document.getElementById('erEuropean').value = data.european_count || 0;
+        document.getElementById('erDischarge').value = data.discharged_count || 0;
+        document.getElementById('erInpatient').value = data.inpatient_admitted || 0;
+        document.getElementById('erICU').value = data.icu_admitted || 0;
+        document.getElementById('erOR').value = data.or_transferred || 0;
+        document.getElementById('erLabOrders').value = data.lab_orders || 0;
+        document.getElementById('erRadOrders').value = data.rad_orders || 0;
+        document.getElementById('erSupervisor').value = data.supervisor || '';
+
+        badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-blue-100 text-blue-800";
+        badge.innerText = "تم استرجاع السجل (جاهز للتعديل) ✏️";
+
+        btn.innerText = "تحديث وتعديل البيانات المسجلة ✓";
+        btn.className = "w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
+      } else {
+        resetERForm();
+      }
+      calcERTotal();
     }
 
     async function saveERData() {
       const btn = document.getElementById('erSaveBtn');
-      btn.innerText = 'جاري الحفظ...';
+      btn.innerText = 'جاري الحفظ في السحابة...';
       btn.disabled = true;
 
       const payload = {
         log_date: document.getElementById('erDate').value,
         shift: document.getElementById('erShift').value,
-        supervisor: document.getElementById('erSupervisor').value,
+        supervisor: document.getElementById('erSupervisor').value || '',
         residents_count: parseInt(document.getElementById('erResidents').value) || 0,
         russian_count: parseInt(document.getElementById('erRussian').value) || 0,
         european_count: parseInt(document.getElementById('erEuropean').value) || 0,
@@ -1052,16 +1098,34 @@
         updated_at: new Date().toISOString()
       };
 
+      // Failsafe local save
+      Storage.save('er_logs', payload);
+
+      let savedInCloud = false;
+      let errorMsg = '';
+
       try {
-        const { error } = await supabaseClient.from('er_logs').upsert(payload, { onConflict: 'log_date,shift' });
-        if (error) throw error;
-        alert('تم حفظ وتحديث بيانات الطوارئ بنجاح ✓');
-        fetchExistingERData();
+        const { data, error } = await supabaseClient
+          .from('er_logs')
+          .upsert(payload, { onConflict: 'log_date,shift' })
+          .select();
+
+        if (error) {
+          errorMsg = error.message;
+        } else {
+          savedInCloud = true;
+        }
       } catch (err) {
-        alert('حدث خطأ أثناء الحفظ: ' + err.message);
-      } finally {
-        btn.disabled = false;
+        errorMsg = err.message;
       }
+
+      btn.disabled = false;
+      if (savedInCloud) {
+        alert('تم حفظ وتحديث بيانات الطوارئ بنجاح في قاعدة البيانات السحابية ✓');
+      } else {
+        alert('تم الحفظ محلياً بنجاح، وواجهت السحابة التنبيه التالي: ' + (errorMsg || 'تأكد من تطبيق كود SQL الأخير'));
+      }
+      fetchExistingERData();
     }
 
     // ----------------------------------------------------
@@ -1093,44 +1157,53 @@
       badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-amber-100 text-amber-800";
       badge.innerText = "جاري الفحص...";
 
+      let data = null;
       try {
-        const { data } = await supabaseClient
+        const res = await supabaseClient
           .from('clinic_logs')
           .select('*')
           .eq('log_date', date)
           .eq('shift', shift)
           .eq('department_code', dept)
           .maybeSingle();
+        data = res.data;
+      } catch(e) {}
 
-        if (data) {
-          document.getElementById('clinicResidents').value = data.residents_count || 0;
-          document.getElementById('clinicRussian').value = data.russian_count || 0;
-          document.getElementById('clinicEuropean').value = data.european_count || 0;
-          document.getElementById('clinicOutLab').value = data.lab_transfers || 0;
-          document.getElementById('clinicOutRad').value = data.rad_transfers || 0;
-          document.getElementById('clinicOutInpatient').value = data.inpatient_admitted || 0;
-          document.getElementById('clinicOutOR').value = data.or_transferred || 0;
-          if (data.doctor_name) document.getElementById('clinicDoctorSelect').value = data.doctor_name;
+      if (!data) {
+        const locals = Storage.get('clinic_logs');
+        data = locals.find(x => x.log_date === date && x.shift === shift && x.department_code === dept);
+      }
 
-          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-blue-100 text-blue-800";
-          badge.innerText = "تم استرجاع السجل (جاهز للتعديل) ✏️";
+      if (data) {
+        document.getElementById('clinicResidents').value = data.residents_count || 0;
+        document.getElementById('clinicRussian').value = data.russian_count || 0;
+        document.getElementById('clinicEuropean').value = data.european_count || 0;
+        document.getElementById('clinicOutLab').value = data.lab_transfers || 0;
+        document.getElementById('clinicOutRad').value = data.rad_transfers || 0;
+        document.getElementById('clinicOutInpatient').value = data.inpatient_admitted || 0;
+        document.getElementById('clinicOutOR').value = data.or_transferred || 0;
+        if (data.doctor_name) document.getElementById('clinicDoctorSelect').value = data.doctor_name;
 
-          btn.innerText = "تحديث وتعديل كشوفات العيادة ✓";
-          btn.className = "w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
-        } else {
-          resetClinicForm();
-        }
-      } catch (err) {
-        badge.innerText = "جاهز للإدخال";
+        badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-blue-100 text-blue-800";
+        badge.innerText = "تم استرجاع السجل (جاهز للتعديل) ✏️";
+
+        btn.innerText = "تحديث وتعديل كشوفات العيادة ✓";
+        btn.className = "w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
+      } else {
+        resetClinicForm();
       }
     }
 
     async function saveClinicData() {
+      const btn = document.getElementById('clinicSaveBtn');
+      btn.innerText = 'جاري الحفظ...';
+      btn.disabled = true;
+
       const payload = {
         log_date: document.getElementById('clinicDate').value,
         shift: document.getElementById('clinicShift').value,
         department_code: document.getElementById('clinicDeptSelect').value,
-        doctor_name: document.getElementById('clinicDoctorSelect').value,
+        doctor_name: document.getElementById('clinicDoctorSelect').value || 'general',
         residents_count: parseInt(document.getElementById('clinicResidents').value) || 0,
         russian_count: parseInt(document.getElementById('clinicRussian').value) || 0,
         european_count: parseInt(document.getElementById('clinicEuropean').value) || 0,
@@ -1141,14 +1214,28 @@
         updated_at: new Date().toISOString()
       };
 
+      Storage.save('clinic_logs', payload);
+
+      let savedInCloud = false;
+      let errorMsg = '';
+
       try {
-        const { error } = await supabaseClient.from('clinic_logs').upsert(payload, { onConflict: 'log_date,shift,department_code' });
-        if (error) throw error;
-        alert('تم حفظ وتحديث كشوفات العيادة بنجاح ✓');
-        fetchExistingClinicData();
-      } catch (err) {
-        alert('خطأ: ' + err.message);
+        const { error } = await supabaseClient
+          .from('clinic_logs')
+          .upsert(payload, { onConflict: 'log_date,shift,department_code' });
+        if (error) errorMsg = error.message;
+        else savedInCloud = true;
+      } catch(e) {
+        errorMsg = e.message;
       }
+
+      btn.disabled = false;
+      if (savedInCloud) {
+        alert('تم حفظ وتحديث كشوفات العيادة بنجاح في السحابة ✓');
+      } else {
+        alert('تم الحفظ محلياً بنجاح. تنبيه السحابة: ' + (errorMsg || 'تأكد من تطبيق كود SQL'));
+      }
+      fetchExistingClinicData();
     }
 
     // ----------------------------------------------------
@@ -1173,34 +1260,43 @@
       const badge = document.getElementById('nursingStatusBadge');
       const btn = document.getElementById('nursingSaveBtn');
 
+      let data = null;
       try {
-        const { data } = await supabaseClient
+        const res = await supabaseClient
           .from('nursing_occupancy')
           .select('*')
           .eq('log_date', date)
           .eq('shift', shift)
           .maybeSingle();
+        data = res.data;
+      } catch(e) {}
 
-        if (data) {
-          document.getElementById('nursingInpatientOccupied').value = data.inpatient_occupied || 0;
-          document.getElementById('nursingICUOccupied').value = data.icu_occupied || 0;
-          document.getElementById('nursingEROccupied').value = data.er_occupied || 0;
-          document.getElementById('nursingStaffCount').value = data.staff_count || 0;
+      if (!data) {
+        const locals = Storage.get('nursing_occupancy');
+        data = locals.find(x => x.log_date === date && x.shift === shift);
+      }
 
-          badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-blue-100 text-blue-800";
-          badge.innerText = "تم استرجاع التقرير (جاهز للتعديل) ✏️";
+      if (data) {
+        document.getElementById('nursingInpatientOccupied').value = data.inpatient_occupied || 0;
+        document.getElementById('nursingICUOccupied').value = data.icu_occupied || 0;
+        document.getElementById('nursingEROccupied').value = data.er_occupied || 0;
+        document.getElementById('nursingStaffCount').value = data.staff_count || 0;
 
-          btn.innerText = "تحديث وتعديل تقرير الإشغال ✓";
-          btn.className = "w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
-        } else {
-          resetNursingForm();
-        }
-      } catch (e) {
-        badge.innerText = "جاهز للإدخال";
+        badge.className = "text-xs px-3 py-1 rounded-full font-bold bg-blue-100 text-blue-800";
+        badge.innerText = "تم استرجاع التقرير (جاهز للتعديل) ✏️";
+
+        btn.innerText = "تحديث وتعديل تقرير الإشغال ✓";
+        btn.className = "w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl shadow transition";
+      } else {
+        resetNursingForm();
       }
     }
 
     async function saveNursingData() {
+      const btn = document.getElementById('nursingSaveBtn');
+      btn.innerText = 'جاري الحفظ...';
+      btn.disabled = true;
+
       const payload = {
         log_date: document.getElementById('nursingDate').value,
         shift: document.getElementById('nursingShift').value,
@@ -1211,18 +1307,32 @@
         updated_at: new Date().toISOString()
       };
 
+      Storage.save('nursing_occupancy', payload);
+
+      let savedInCloud = false;
+      let errorMsg = '';
+
       try {
-        const { error } = await supabaseClient.from('nursing_occupancy').upsert(payload, { onConflict: 'log_date,shift' });
-        if (error) throw error;
-        alert('تم حفظ وتحديث إشغال التمريض بنجاح ✓');
-        fetchExistingNursingData();
+        const { error } = await supabaseClient
+          .from('nursing_occupancy')
+          .upsert(payload, { onConflict: 'log_date,shift' });
+        if (error) errorMsg = error.message;
+        else savedInCloud = true;
       } catch(err) {
-        alert('خطأ: ' + err.message);
+        errorMsg = err.message;
       }
+
+      btn.disabled = false;
+      if (savedInCloud) {
+        alert('تم حفظ وتحديث إشغال التمريض بنجاح في السحابة ✓');
+      } else {
+        alert('تم الحفظ محلياً بنجاح. تنبيه السحابة: ' + (errorMsg || 'تأكد من تطبيق كود SQL'));
+      }
+      fetchExistingNursingData();
     }
 
     // ----------------------------------------------------
-    // REPORTS, CHARTS & MULTI-SHEET EXCEL
+    // REPORTS & EXCEL GENERATOR (HYBRID DATA MERGE)
     // ----------------------------------------------------
     let currentERRecords = [];
     let currentClinicRecords = [];
@@ -1244,53 +1354,62 @@
       };
       document.getElementById('reportHeaderTitle').innerText = titleMap[repType];
 
+      // Pull from Cloud with Local fallback
       try {
         const { data: erData } = await supabaseClient.from('er_logs').select('*').gte('log_date', fromDate).lte('log_date', toDate).order('log_date', { ascending: false });
-        const { data: clinicData } = await supabaseClient.from('clinic_logs').select('*').gte('log_date', fromDate).lte('log_date', toDate).order('log_date', { ascending: false });
-        const { data: nursingData } = await supabaseClient.from('nursing_occupancy').select('*').gte('log_date', fromDate).lte('log_date', toDate).order('log_date', { ascending: false });
-
-        currentERRecords = erData || [];
-        currentClinicRecords = clinicData || [];
-        currentNursingRecords = nursingData || [];
-
-        let totalER = 0, totalClinics = 0, totalInpatient = 0, totalICU = 0;
-        let totalRes = 0, totalRus = 0, totalEur = 0;
-        let totalLab = 0, totalRad = 0, totalOR = 0;
-
-        currentERRecords.forEach(r => {
-          totalER += (r.residents_count || 0) + (r.russian_count || 0) + (r.european_count || 0);
-          totalRes += (r.residents_count || 0);
-          totalRus += (r.russian_count || 0);
-          totalEur += (r.european_count || 0);
-          totalInpatient += (r.inpatient_admitted || 0);
-          totalICU += (r.icu_admitted || 0);
-          totalOR += (r.or_transferred || 0);
-          totalLab += (r.lab_orders || 0);
-          totalRad += (r.rad_orders || 0);
-        });
-
-        currentClinicRecords.forEach(c => {
-          totalClinics += (c.residents_count || 0) + (c.russian_count || 0) + (c.european_count || 0);
-          totalRes += (c.residents_count || 0);
-          totalRus += (c.russian_count || 0);
-          totalEur += (c.european_count || 0);
-          totalInpatient += (c.inpatient_admitted || 0);
-          totalOR += (c.or_transferred || 0);
-          totalLab += (c.lab_transfers || 0);
-          totalRad += (c.rad_transfers || 0);
-        });
-
-        document.getElementById('kpiERTotal').innerText = totalER;
-        document.getElementById('kpiClinicsTotal').innerText = totalClinics;
-        document.getElementById('kpiInpatientTotal').innerText = totalInpatient;
-        document.getElementById('kpiICUTotal').innerText = totalICU;
-
-        renderReportTable(repType);
-        renderCharts({ totalRes, totalRus, totalEur, totalLab, totalRad, totalInpatient, totalICU, totalOR });
-
-      } catch (err) {
-        console.error("Report error", err);
+        currentERRecords = (erData && erData.length) ? erData : Storage.get('er_logs').filter(x => x.log_date >= fromDate && x.log_date <= toDate);
+      } catch(e) {
+        currentERRecords = Storage.get('er_logs').filter(x => x.log_date >= fromDate && x.log_date <= toDate);
       }
+
+      try {
+        const { data: clinicData } = await supabaseClient.from('clinic_logs').select('*').gte('log_date', fromDate).lte('log_date', toDate).order('log_date', { ascending: false });
+        currentClinicRecords = (clinicData && clinicData.length) ? clinicData : Storage.get('clinic_logs').filter(x => x.log_date >= fromDate && x.log_date <= toDate);
+      } catch(e) {
+        currentClinicRecords = Storage.get('clinic_logs').filter(x => x.log_date >= fromDate && x.log_date <= toDate);
+      }
+
+      try {
+        const { data: nursingData } = await supabaseClient.from('nursing_occupancy').select('*').gte('log_date', fromDate).lte('log_date', toDate).order('log_date', { ascending: false });
+        currentNursingRecords = (nursingData && nursingData.length) ? nursingData : Storage.get('nursing_occupancy').filter(x => x.log_date >= fromDate && x.log_date <= toDate);
+      } catch(e) {
+        currentNursingRecords = Storage.get('nursing_occupancy').filter(x => x.log_date >= fromDate && x.log_date <= toDate);
+      }
+
+      let totalER = 0, totalClinics = 0, totalInpatient = 0, totalICU = 0;
+      let totalRes = 0, totalRus = 0, totalEur = 0;
+      let totalLab = 0, totalRad = 0, totalOR = 0;
+
+      currentERRecords.forEach(r => {
+        totalER += (r.residents_count || 0) + (r.russian_count || 0) + (r.european_count || 0);
+        totalRes += (r.residents_count || 0);
+        totalRus += (r.russian_count || 0);
+        totalEur += (r.european_count || 0);
+        totalInpatient += (r.inpatient_admitted || 0);
+        totalICU += (r.icu_admitted || 0);
+        totalOR += (r.or_transferred || 0);
+        totalLab += (r.lab_orders || 0);
+        totalRad += (r.rad_orders || 0);
+      });
+
+      currentClinicRecords.forEach(c => {
+        totalClinics += (c.residents_count || 0) + (c.russian_count || 0) + (c.european_count || 0);
+        totalRes += (c.residents_count || 0);
+        totalRus += (c.russian_count || 0);
+        totalEur += (c.european_count || 0);
+        totalInpatient += (c.inpatient_admitted || 0);
+        totalOR += (c.or_transferred || 0);
+        totalLab += (c.lab_transfers || 0);
+        totalRad += (c.rad_transfers || 0);
+      });
+
+      document.getElementById('kpiERTotal').innerText = totalER;
+      document.getElementById('kpiClinicsTotal').innerText = totalClinics;
+      document.getElementById('kpiInpatientTotal').innerText = totalInpatient;
+      document.getElementById('kpiICUTotal').innerText = totalICU;
+
+      renderReportTable(repType);
+      renderCharts({ totalRes, totalRus, totalEur, totalLab, totalRad, totalInpatient, totalICU, totalOR });
     }
 
     function renderReportTable(type) {
@@ -1332,7 +1451,7 @@
         <tr class="bg-slate-200 text-slate-800 border-b font-bold">
           <th class="p-2">التاريخ</th>
           <th class="p-2">الوردية</th>
-          <th class="p-2">القسم / الطبيب</th>
+          <th class="p-2">القسم / السجل</th>
           <th class="p-2">مقيم</th>
           <th class="p-2">روسي</th>
           <th class="p-2">أوروبي</th>
@@ -1395,7 +1514,7 @@
       demoChartInstance = new Chart(ctxPie, {
         type: 'doughnut',
         data: {
-          labels: currentLang === 'ar' ? ['مصريون / مقيمون', 'سياحة روسية', 'سياحة أوروبية'] : ['Residents', 'Russian', 'European'],
+          labels: ['مصريون / مقيمون', 'سياحة روسية', 'سياحة أوروبية'],
           datasets: [{
             data: [metrics.totalRes, metrics.totalRus, metrics.totalEur],
             backgroundColor: ['#3b82f6', '#6366f1', '#a855f7'],
@@ -1415,9 +1534,9 @@
       outcomesChartInstance = new Chart(ctxBar, {
         type: 'bar',
         data: {
-          labels: currentLang === 'ar' ? ['معمل', 'أشعة', 'تنويم داخلي', 'رعاية ICU', 'عمليات'] : ['Lab', 'Radiology', 'Ward', 'ICU', 'OR'],
+          labels: ['معمل', 'أشعة', 'تنويم داخلي', 'رعاية ICU', 'عمليات'],
           datasets: [{
-            label: currentLang === 'ar' ? 'عدد الإحالات' : 'Cases Count',
+            label: 'عدد الإحالات',
             data: [metrics.totalLab, metrics.totalRad, metrics.totalInpatient, metrics.totalICU, metrics.totalOR],
             backgroundColor: ['#0d9488', '#0284c7', '#d97706', '#e11d48', '#b91c1c']
           }]
