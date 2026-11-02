@@ -87,11 +87,6 @@
         </button>
       </form>
 
-      <div class="mt-4 pt-3 border-t text-center">
-        <button onclick="bypassLogin()" class="text-xs text-teal-700 hover:text-teal-900 font-bold underline">
-          ⚡ الدخول المباشر السريع كمدير تنفيذي (Bypass Mode)
-        </button>
-      </div>
       <div id="loginError" class="hidden mt-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 text-center font-semibold"></div>
     </div>
   </section>
@@ -746,13 +741,13 @@
       await loadDepartments();
 
       if (!supabaseClient) {
-        showApp();
+        showLogin();
         return;
       }
 
       try {
         const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
+        if (session && session.user) {
           currentUser = session.user;
           showApp();
         } else {
